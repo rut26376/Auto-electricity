@@ -1,113 +1,128 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
-
 <head>
-  <meta charset="UTF-8">
-  <title>צפייה בחשבון חשמל</title>
+<meta charset="UTF-8">
+<title>צפייה בחשבון חשמל</title>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f2f4f7;
-      padding: 40px;
-    }
+<style>
+:root {
+  --primary: #0f172a;
+  --secondary: #fbbf24;
+  --bg: #f5f7fb;
+  --card: #ffffff;
+  --border: #e5e7eb;
+}
 
-    .container {
-      max-width: 650px;
-      margin: auto;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      padding: 30px;
-    }
+* {
+  box-sizing: border-box;
+}
 
-    h1 {
-      text-align: center;
-      margin-bottom: 25px;
-    }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  padding: 40px;
+}
 
-    input[type="file"] {
-      width: 100%;
-      margin-bottom: 15px;
-    }
+.container {
+  max-width: 720px;
+  margin: auto;
+  background: var(--card);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  padding: 32px;
+}
 
-    .card {
-      background: #f9fafb;
-      border-radius: 8px;
-      padding: 12px 18px;
-      margin-bottom: 12px;
-      border-right: 5px solid #4f46e5;
-    }
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 30px;
+}
 
-    .label {
-      color: #6b7280;
-      font-size: 14px;
-      margin-bottom: 4px;
-    }
+.header img {
+  max-height: 80px;
+}
 
-    .field {
-      width: 100%;
-      font-size: 18px;
-      font-weight: bold;
-      border: none;
-      background: transparent;
-      outline: none;
-    }
+input[type="file"] {
+  width: 100%;
+  padding: 12px;
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+  margin-bottom: 24px;
+  cursor: pointer;
+}
 
-    button {
-      width: 100%;
-      padding: 12px;
-      font-size: 16px;
-      border: none;
-      border-radius: 8px;
-      background: #4f46e5;
-      color: white;
-      cursor: pointer;
-      margin-top: 15px;
-    }
-  </style>
+.card {
+  display: flex;
+  flex-direction: column;
+  background: #f9fafb;
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  border-right: 6px solid var(--secondary);
+}
+
+.label {
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.field {
+  font-size: 17px;
+  font-weight: bold;
+  border: none;
+  background: transparent;
+  outline: none;
+  color: var(--primary);
+}
+
+button {
+  width: 100%;
+  margin-top: 24px;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: bold;
+  border: none;
+  border-radius: 10px;
+  background: var(--primary);
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+</style>
 </head>
 
 <body>
 
-  <div class="container">
-    <h1>פרטי חשבון חשמל</h1>
+<div class="container">
 
-    <input type="file" id="pdfInput" accept="application/pdf">
-
-    <div class="card">
-      <div class="label">שם העמותה</div><input class="field" id="name">
-    </div>
-    <div class="card">
-      <div class="label">מספר העמותה</div><input class="field" id="association">
-    </div>
-    <div class="card">
-      <div class="label">כתובת מלאה</div><input class="field" id="address">
-    </div>
-    <div class="card">
-      <div class="label">מספר חשבון חוזה</div><input class="field" id="contract">
-    </div>
-    <div class="card">
-      <div class="label">מספר מונה</div><input class="field" id="meter">
-    </div>
-    <div class="card">
-      <div class="label">תעו״ז / רגיל</div><input class="field" id="tariff">
-    </div>
-
-    <div class="card">
-      <div class="label">טלפון</div><input class="field" id="phone">
-    </div>
-    <div class="card">
-      <div class="label">מייל</div><input class="field" id="email">
-    </div>
-    <div class="card">
-      <div class="label">פרטי בנק</div><input class="field" id="bank">
-    </div>
-
-    <button onclick="sendEmail()">שלח מייל</button>
+  <div class="header">
+    <img src="logo.JPG" alt="לוגו">
   </div>
+
+  <input type="file" id="pdfInput" accept="application/pdf">
+
+  <div class="card"><div class="label">שם העמותה</div><input class="field" id="name"></div>
+  <div class="card"><div class="label">מספר העמותה</div><input class="field" id="association"></div>
+  <div class="card"><div class="label">כתובת מלאה</div><input class="field" id="address"></div>
+  <div class="card"><div class="label">מספר חשבון חוזה</div><input class="field" id="contract"></div>
+  <div class="card"><div class="label">מספר מונה</div><input class="field" id="meter"></div>
+  <div class="card"><div class="label">תעו״ז / רגיל</div><input class="field" id="tariff"></div>
+
+  <div class="card"><div class="label">טלפון</div><input class="field" id="phone"></div>
+  <div class="card"><div class="label">מייל</div><input class="field" id="email"></div>
+  <div class="card"><div class="label">פרטי בנק</div><input class="field" id="bank"></div>
+
+  <button onclick="sendEmail()">שלח מייל</button>
+
+</div>
 
   <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc =
