@@ -50,6 +50,18 @@
       font-weight: bold;
       margin-top: 5px;
     }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background: #4f46e5;
+      color: white;
+      cursor: pointer;
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
@@ -73,11 +85,15 @@
     <div class="label">סה״כ לתשלום (₪)</div>
     <div class="value" id="totalAmount">—</div>
   </div>
+
+  <button onclick="sendEmail()">שלח מייל עם הנתונים</button>
 </div>
 
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+let extractedData = {};
 
 document.getElementById("pdfInput").addEventListener("change", async (e) => {
   const file = e.target.files[0];
@@ -90,22 +106,37 @@ document.getElementById("pdfInput").addEventListener("change", async (e) => {
   const textContent = await page.getTextContent();
   const text = textContent.items.map(i => i.str).join("\n");
 
-  // חילוץ לפי מבנה קבוע של הדוח
-  const name =
+  extractedData.customerName =
     text.match(/שם הלקוח וכתובת האספקה:\s*([\s\S]*?),/)?.[1]
-    || text.match(/שם הצרכן:\s*(.+)/)?.[1];
+    || text.match(/שם הצרכן:\s*(.+)/)?.[1]
+    || "לא נמצא";
 
-  const contract =
-    text.match(/מספר חשבון חוזה:\s*(\d+)/)?.[1];
+  extractedData.contractNumber =
+    text.match(/מספר חשבון חוזה:\s*(\d+)/)?.[1]
+    || "לא נמצא";
 
-  const amount =
-    text.match(/סה״כ לתשלום.*?([\d.]+)/)?.[1]
-    || text.match(/827\.81/)?.[0];
+  extractedData.totalAmount =
+    text.match(/([\d]+\.[\d]{2})\s*["״]?\s*ח?סה"?כ\s*לתשלום/)?.[1]
+    || "לא נמצא";
 
-  document.getElementById("customerName").textContent = name || "לא נמצא";
-  document.getElementById("contractNumber").textContent = contract || "לא נמצא";
-  document.getElementById("totalAmount").textContent = amount || "לא נמצא";
+  document.getElementById("customerName").textContent = extractedData.customerName;
+  document.getElementById("contractNumber").textContent = extractedData.contractNumber;
+  document.getElementById("totalAmount").textContent = extractedData.totalAmount;
 });
+
+function sendEmail() {
+  const subject = encodeURIComponent("נתוני חשבון חשמל");
+  const body = encodeURIComponent(
+`שם לקוח: ${extractedData.customerName}
+מספר חשבון חוזה: ${extractedData.contractNumber}
+סה״כ לתשלום: ${extractedData.totalAmount} ₪`
+  );
+
+  const gmailUrl =
+    `https://mail.google.com/mail/?view=cm&fs=1&to=your@email.com&su=${subject}&body=${body}`;
+
+  window.open(gmailUrl, "_blank");
+}
 </script>
 
 </body>
