@@ -12,7 +12,6 @@ body {
   background: #f2f4f7;
   padding: 40px;
 }
-
 .container {
   max-width: 650px;
   margin: auto;
@@ -21,17 +20,14 @@ body {
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   padding: 30px;
 }
-
 h1 {
   text-align: center;
   margin-bottom: 25px;
 }
-
 input[type="file"] {
   width: 100%;
   margin-bottom: 15px;
 }
-
 .card {
   background: #f9fafb;
   border-radius: 8px;
@@ -39,13 +35,11 @@ input[type="file"] {
   margin-bottom: 12px;
   border-right: 5px solid #4f46e5;
 }
-
 .label {
   color: #6b7280;
   font-size: 14px;
   margin-bottom: 4px;
 }
-
 .field {
   width: 100%;
   font-size: 18px;
@@ -54,7 +48,6 @@ input[type="file"] {
   background: transparent;
   outline: none;
 }
-
 button {
   width: 100%;
   padding: 12px;
@@ -76,40 +69,16 @@ button {
 
 <input type="file" id="pdfInput" accept="application/pdf">
 
-<div class="card">
-  <div class="label">שם הלקוח</div>
-  <input class="field" id="name">
-</div>
+<div class="card"><div class="label">שם העמותה</div><input class="field" id="name"></div>
+<div class="card"><div class="label">מספר העמותה</div><input class="field" id="association"></div>
+<div class="card"><div class="label">כתובת מלאה</div><input class="field" id="address"></div>
+<div class="card"><div class="label">מספר חשבון חוזה</div><input class="field" id="contract"></div>
+<div class="card"><div class="label">מספר מונה</div><input class="field" id="meter"></div>
+<div class="card"><div class="label">תעו״ז / רגיל</div><input class="field" id="tariff"></div>
 
-<div class="card">
-  <div class="label">כתובת האספקה</div>
-  <input class="field" id="address">
-</div>
-
-<div class="card">
-  <div class="label">מספר חשבון חוזה</div>
-  <input class="field" id="contract">
-</div>
-
-<div class="card">
-  <div class="label">סה״כ לתשלום (₪)</div>
-  <input class="field" id="amount">
-</div>
-
-<div class="card">
-  <div class="label">טלפון</div>
-  <input class="field" id="phone">
-</div>
-
-<div class="card">
-  <div class="label">מייל</div>
-  <input class="field" id="email">
-</div>
-
-<div class="card">
-  <div class="label">פרטי בנק</div>
-  <input class="field" id="bank">
-</div>
+<div class="card"><div class="label">טלפון</div><input class="field" id="phone"></div>
+<div class="card"><div class="label">מייל</div><input class="field" id="email"></div>
+<div class="card"><div class="label">פרטי בנק</div><input class="field" id="bank"></div>
 
 <button onclick="sendEmail()">שלח מייל</button>
 </div>
@@ -121,32 +90,57 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 document.getElementById("pdfInput").addEventListener("change", async e => {
   const buffer = await e.target.files[0].arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
-  const page = await pdf.getPage(1);
-  const text = (await page.getTextContent()).items.map(i=>i.str).join("\n");
 
-  const block = text.match(/שם הלקוח וכתובת האספקה:\s*([\s\S]*?)\n\n/)?.[1] || "";
-  const lines = block.split("\n").map(l=>l.trim()).filter(Boolean);
+  let fullText = "";
 
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const text = (await page.getTextContent()).items.map(i => i.str).join("\n");
+    fullText += "\n" + text;
+  }
+
+  // שם עמותה
   document.getElementById("name").value =
-    lines[0] || "";
+    fullText.match(/שם הצרכן:\s*(.+)/)?.[1] ||
+    fullText.match(/לכבוד:\s*(.+)/)?.[1] || "";
 
-  document.getElementById("address").value =
-    lines[1] || "";
+  // מספר עמותה
+  document.getElementById("association").value =
+    fullText.match(/עמותה\s*(\d+)/)?.[1] || "";
 
+  // כתובת – שורות אחרי השם
+  const addressBlock =
+    fullText.match(/לכבוד:[\s\S]*?\n([\s\S]*?)\n\s*\n/)?.[1] || "";
+  const addressLines = addressBlock
+    .split("\n")
+    .map(l => l.trim())
+    .filter(Boolean)
+    .slice(1); // מדלג על שם העמותה
+  document.getElementById("address").value = addressLines.join(" ");
+
+  // מספר חוזה
   document.getElementById("contract").value =
-    text.match(/מספר חשבון חוזה:\s*(\d+)/)?.[1] || "";
+    fullText.match(/מספר חשבון חוזה:\s*(\d+)/)?.[1] || "";
 
-  document.getElementById("amount").value =
-    text.match(/([\d]+\.[\d]{2})\s*["״]?\s*ח?סה"?כ\s*לתשלום/)?.[1] || "";
+  // מספר מונה – עמוד 2
+  document.getElementById("meter").value =
+    fullText.match(/מונה מספר:\s*(\d+)/)?.[1] || "";
+
+  // תעו"ז / רגיל – לפי סוג לקוח
+  const tariffMatch = fullText.match(/סוג הלקוח[\s\S]*?(תעו[\"״]?ז)/);
+  document.getElementById("tariff").value =
+    tariffMatch ? "תעו\"ז" : "רגיל";
 });
 
 function sendEmail(){
   const subject = encodeURIComponent("נתוני חשבון חשמל");
   const body = encodeURIComponent(
-`שם: ${name.value}
+`שם עמותה: ${name.value}
+מספר עמותה: ${association.value}
 כתובת: ${address.value}
-חוזה: ${contract.value}
-לתשלום: ${amount.value}
+מספר חוזה: ${contract.value}
+מספר מונה: ${meter.value}
+תעריף: ${tariff.value}
 
 טלפון: ${phone.value}
 מייל: ${email.value}
