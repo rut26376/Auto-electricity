@@ -118,7 +118,11 @@ button:hover {
 
   <div class="card"><div class="label">טלפון</div><input class="field" id="phone"></div>
   <div class="card"><div class="label">מייל</div><input class="field" id="email"></div>
-  <div class="card"><div class="label">פרטי בנק</div><input class="field" id="bank"></div>
+<div class="card"><div class="label">שם הבנק</div><input class="field" id="bankName"></div>
+<div class="card"><div class="label">מספר סניף</div><input class="field" id="bankBranch"></div>
+<div class="card"><div class="label">מספר חשבון</div><input class="field" id="bankAccount"></div>
+<div class="card"><div class="label">שם בעל החשבון</div><input class="field" id="bankHolder"></div>
+
 
   <button onclick="sendEmail()">שלח מייל</button>
 
@@ -186,26 +190,32 @@ document.getElementById("address").value = addressLines.join(" ");
         /סוג הלקוח[\s\S]*?תעו/.test(fullText) ? 'תעו"ז' : 'רגיל';
     });
 
-    function sendEmail() {
-      const subject = encodeURIComponent("נתוני חשבון חשמל");
-      const body = encodeURIComponent(
-        `שם עמותה: ${name.value}
-מספר עמותה: ${association.value}
-כתובת: ${address.value}
-מספר חוזה: ${contract.value}
-מספר מונה: ${meter.value}
-תעריף: ${tariff.value}
+function sendEmail(){
+  const subject = encodeURIComponent("נתוני חשבון חשמל");
 
-טלפון: ${phone.value}
-מייל: ${email.value}
-בנק: ${bank.value}`
-      );
+  const body = encodeURIComponent(
+`שם עמותה: ${document.getElementById("name").value}
+מספר עמותה: ${document.getElementById("association").value}
+כתובת: ${document.getElementById("address").value}
+מספר חוזה: ${document.getElementById("contract").value}
+מספר מונה: ${document.getElementById("meter").value}
+תעריף: ${document.getElementById("tariff").value}
 
-      window.open(
-        `https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`,
-        "_blank"
-      );
-    }
+שם הבנק: ${document.getElementById("bankName").value}
+סניף: ${document.getElementById("bankBranch").value}
+חשבון: ${document.getElementById("bankAccount").value}
+בעל החשבון: ${document.getElementById("bankHolder").value}
+
+טלפון: ${document.getElementById("phone").value}
+מייל: ${document.getElementById("email").value}`
+  );
+
+  window.open(
+    `https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`,
+    "_blank"
+  );
+}
+
   </script>
 
 </body>
