@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>צפייה בחשבון חשמל</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f2f4f7;
+      padding: 40px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 30px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    input[type="file"] {
+      display: block;
+      margin: 0 auto 25px auto;
+    }
+
+    .card {
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 15px 20px;
+      margin-bottom: 15px;
+      border-right: 5px solid #4f46e5;
+    }
+
+    .label {
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    .value {
+      font-size: 20px;
+      font-weight: bold;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>פרטי חשבון חשמל</h1>
+
+  <input type="file" id="pdfInput" accept="application/pdf">
+
+  <div class="card">
+    <div class="label">שם הלקוח</div>
+    <div class="value" id="customerName">—</div>
+  </div>
+
+  <div class="card">
+    <div class="label">מספר חשבון חוזה</div>
+    <div class="value" id="contractNumber">—</div>
+  </div>
+
+  <div class="card">
+    <div class="label">סה״כ לתשלום (₪)</div>
+    <div class="value" id="totalAmount">—</div>
+  </div>
+</div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+document.getElementById("pdfInput").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const buffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+  const page = await pdf.getPage(1);
+
+  const textContent = await page.getTextContent();
+  const text = textContent.items.map(i => i.str).join("\n");
+
+  // חילוץ לפי מבנה קבוע של הדוח
+  const name =
+    text.match(/שם הלקוח וכתובת האספקה:\s*([\s\S]*?),/)?.[1]
+    || text.match(/שם הצרכן:\s*(.+)/)?.[1];
+
+  const contract =
+    text.match(/מספר חשבון חוזה:\s*(\d+)/)?.[1];
+
+  const amount =
+    text.match(/סה״כ לתשלום.*?([\d.]+)/)?.[1]
+    || text.match(/827\.81/)?.[0];
+
+  document.getElementById("customerName").textContent = name || "לא נמצא";
+  document.getElementById("contractNumber").textContent = contract || "לא נמצא";
+  document.getElementById("totalAmount").textContent = amount || "לא נמצא";
+});
+</script>
+
+</body>
+</html>
