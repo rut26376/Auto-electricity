@@ -1,141 +1,202 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
+
 <head>
-<meta charset="UTF-8">
-<title>נתוני חשמל</title>
-<link rel="icon" href="logo3.png" type="image/x-icon">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <meta charset="UTF-8">
+  <title>נתוני חשמל</title>
+  <link rel="icon" href="logo3.png" type="image/x-icon">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
-<style>
-:root {
-  --primary: #0f172a;
-  --secondary: #fbbf24;
-  --bg: #f5f7fb;
-  --card: #ffffff;
-  --border: #e5e7eb;
-}
+  <style>
+    :root {
+      --primary: #0f172a;
+      --secondary: #fbbf24;
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --border: #e5e7eb;
+    }
 
-* {
-  box-sizing: border-box;
-}
+    * {
+      box-sizing: border-box;
+    }
 
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: var(--bg);
-  padding: 40px;
-}
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      padding: 40px;
+    }
 
-.container {
-  max-width: 720px;
-  margin: auto;
-  background: var(--card);
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-  padding: 32px;
-}
+    .container {
+      max-width: 720px;
+      margin: auto;
+      background: var(--card);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      padding: 32px;
+    }
 
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 30px;
-}
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 30px;
+    }
 
-.header img {
-  max-height: 80px;
-}
+    .header img {
+      max-height: 80px;
+    }
 
-input[type="file"] {
-  width: 100%;
-  padding: 12px;
-  border: 2px dashed var(--border);
-  border-radius: 10px;
-  margin-bottom: 24px;
-  cursor: pointer;
-}
+    input[type="file"] {
+      width: 100%;
+      padding: 12px;
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      margin-bottom: 24px;
+      cursor: pointer;
+    }
 
-.card {
-  display: flex;
-  flex-direction: column;
-  background: #f9fafb;
-  border-radius: 10px;
-  padding: 14px 18px;
-  margin-bottom: 14px;
-  border-right: 6px solid var(--secondary);
-}
+    .card {
+      display: flex;
+      flex-direction: column;
+      background: #f9fafb;
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 14px;
+      border-right: 6px solid var(--secondary);
+    }
 
-.label {
-  font-size: 13px;
-  color: #6b7280;
-  margin-bottom: 4px;
-}
+    .label {
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
 
-.field {
-  font-size: 17px;
-  font-weight: bold;
-  border: none;
-  background: transparent;
-  outline: none;
-  color: var(--primary);
-}
+    .field {
+      font-size: 17px;
+      font-weight: bold;
+      border: none;
+      background: transparent;
+      outline: none;
+      color: var(--primary);
+    }
 
-button {
-  width: 100%;
-  margin-top: 24px;
-  padding: 14px;
-  font-size: 16px;
-  font-weight: bold;
-  border: none;
-  border-radius: 10px;
-  background: var(--primary);
-  color: white;
-  cursor: pointer;
-}
+    button {
+      width: 100%;
+      margin-top: 24px;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: bold;
+      border: none;
+      border-radius: 10px;
+      background: var(--primary);
+      color: white;
+      cursor: pointer;
+    }
 
-button:hover {
-  opacity: 0.9;
-}
-</style>
+    button:hover {
+      opacity: 0.9;
+    }
+  </style>
 </head>
 
 <body>
 
-<div class="container">
+  <div class="container">
 
-  <div class="header">
-    <img src="logo.JPG" alt="לוגו">
+    <div class="header">
+      <img src="logo.JPG" alt="לוגו">
+    </div>
+
+    <input type="file" id="pdfInput" accept="application/pdf">
+
+    <div class="card">
+      <div class="label">שם העמותה</div><input class="field" id="name">
+    </div>
+    <div class="card">
+      <div class="label">מספר העמותה</div><input class="field" id="association">
+    </div>
+    <div class="card">
+      <div class="label">כתובת מלאה</div><input class="field" id="address">
+    </div>
+    <div class="card">
+      <div class="label">מספר חשבון חוזה</div><input class="field" id="contract">
+    </div>
+    <div class="card">
+      <div class="label">מספר מונה</div><input class="field" id="meter">
+    </div>
+    <div class="card">
+      <div class="label">תעריף</div><input class="field" id="tariff">
+    </div>
+    <div class="card">
+      <div class="label">סוג קריאה</div>
+      <input class="field" id="readingType">
+    </div>
+    <div class="card" id="supplyAddressCard" style="display:none">
+      <div class="label">כתובת אספקה</div>
+      <input class="field" id="supplyAddress">
+    </div>
+
+    <div class="card">
+      <div class="label">טלפון</div><input class="field" id="phone">
+    </div>
+    <div class="card">
+      <div class="label">מייל</div><input class="field" id="email">
+    </div>
+
+    <div class="card">
+      <div class="label">שם איש קשר</div>
+      <input class="field" id="contactName">
+    </div>
+
+    <div class="card">
+      <div class="label">שם הבנק</div>
+      <select class="field" id="bankName">
+        <option value="">בחר בנק</option>
+        <option value="בנק לאומי">בנק לאומי</option>
+        <option value="בנק הפועלים">בנק הפועלים</option>
+        <option value="בנק דיסקונט">בנק דיסקונט</option>
+        <option value="בנק מזרחי טפחות">בנק מזרחי טפחות</option>
+        <option value="הבנק הבינלאומי">הבנק הבינלאומי</option>
+        <option value="בנק מרכנתיל">בנק מרכנתיל</option>
+        <option value="בנק יהב">בנק יהב</option>
+        <option value="בנק ירושלים">בנק ירושלים</option>
+        <option value="בנק מסד">בנק מסד</option>
+        <option value="בנק הדואר">בנק הדואר</option>
+      </select>
+    </div>
+
+    <div class="card">
+      <div class="label">מספר סניף</div><input class="field" id="bankBranch">
+    </div>
+    <div class="card">
+      <div class="label">מספר חשבון</div><input class="field" id="bankAccount">
+    </div>
+    <div class="card">
+      <div class="label">שם בעל החשבון</div><input class="field" id="bankHolder">
+    </div>
+
+
+    <button onclick="sendEmail()">שלח מייל</button>
+
   </div>
-
-  <input type="file" id="pdfInput" accept="application/pdf">
-
-  <div class="card"><div class="label">שם העמותה</div><input class="field" id="name"></div>
-  <div class="card"><div class="label">מספר העמותה</div><input class="field" id="association"></div>
-  <div class="card"><div class="label">כתובת מלאה</div><input class="field" id="address"></div>
-  <div class="card"><div class="label">מספר חשבון חוזה</div><input class="field" id="contract"></div>
-  <div class="card"><div class="label">מספר מונה</div><input class="field" id="meter"></div>
-  <div class="card"><div class="label">תעו״ז / רגיל</div><input class="field" id="tariff"></div>
-
-  <div class="card"><div class="label">טלפון</div><input class="field" id="phone"></div>
-  <div class="card"><div class="label">מייל</div><input class="field" id="email"></div>
-<div class="card"><div class="label">שם הבנק</div><input class="field" id="bankName"></div>
-<div class="card"><div class="label">מספר סניף</div><input class="field" id="bankBranch"></div>
-<div class="card"><div class="label">מספר חשבון</div><input class="field" id="bankAccount"></div>
-<div class="card"><div class="label">שם בעל החשבון</div><input class="field" id="bankHolder"></div>
-
-
-  <button onclick="sendEmail()">שלח מייל</button>
-
-</div>
 
   <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc =
       "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
     document.getElementById("pdfInput").addEventListener("change", async e => {
+
+      // --- איפוס כתובת אספקה מקובץ קודם ---
+      const supplyField = document.getElementById("supplyAddress");
+      const supplyCard = document.getElementById("supplyAddressCard");
+
+      if (supplyField) supplyField.value = "";
+      if (supplyCard) supplyCard.style.display = "none";
+
       const buffer = await e.target.files[0].arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
-      
+
       let fullText = "";
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
@@ -149,30 +210,64 @@ button:hover {
       const orgName = nameMatch ? nameMatch[1].trim() : "";
 
       document.getElementById("name").value = orgName;
+      document.getElementById("bankHolder").value = orgName;
+
 
       // מספר עמותה
       document.getElementById("association").value =
         fullText.match(/עמותה\s*(\d+)/)?.[1] || "";
-// חילוץ כתובת: שתי שורות לא ריקות אחרי שם העמותה
-let addressLines = [];
 
-for (let i = 0; i < lines.length; i++) {
-  if (lines[i].trim() === orgName) {
-    let j = i + 1;
+      // --- חילוץ סוג קריאה ---
+      const hasRemote = /מרחוק/.test(fullText);
+      const hasEstimate = /הערכה/.test(fullText);
 
-    while (j < lines.length && addressLines.length < 2) {
-      const line = lines[j].trim();
-      if (line !== "") {
-        addressLines.push(line);
+      let readingType = "רגילה";
+
+      if (hasRemote && hasEstimate) {
+        readingType = "הערכה מרחוק";
+      } else if (hasRemote) {
+        readingType = "מרחוק";
+      } else if (hasEstimate) {
+        readingType = "הערכה";
       }
-      j++;
-    }
 
-    break;
-  }
-}
+      document.getElementById("readingType").value = readingType;
+      // --- חילוץ כתובת אספקה ---
+      let supplyAddress = "";
 
-document.getElementById("address").value = addressLines.join(" ");
+      const supplyMatch = fullText.match(
+        /שם הלקוח וכתובת האספקה:[\s\S]*?\n(.+)\n\s*\n(.+)/
+      );
+
+      if (supplyMatch) {
+        const line1 = supplyMatch[1].trim().replace(/,$/, "");
+        const line2 = supplyMatch[2].trim();
+        supplyAddress = `${line1} ${line2}`;
+
+        document.getElementById("supplyAddress").value = supplyAddress;
+        document.getElementById("supplyAddressCard").style.display = "flex";
+      }
+
+      // חילוץ כתובת: שתי שורות לא ריקות אחרי שם העמותה
+      let addressLines = [];
+
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].trim() === orgName) {
+          let j = i + 1;
+
+          while (j < lines.length && addressLines.length < 2) {
+            const line = lines[j].trim();
+            if (line !== "") {
+              addressLines.push(line);
+            }
+            j++;
+          }
+
+          break;
+        }
+      }
+
+      document.getElementById("address").value = addressLines.join(" ");
 
 
 
@@ -182,7 +277,7 @@ document.getElementById("address").value = addressLines.join(" ");
 
       // מספר מונה
       document.getElementById("meter").value =
-  fullText.match(/מונה מספר\s*(\d+)/)?.[1] || "";
+        fullText.match(/מונה מספר\s*(\d+)/)?.[1] || "";
 
 
       // תעו"ז / רגיל
@@ -190,16 +285,28 @@ document.getElementById("address").value = addressLines.join(" ");
         /סוג הלקוח[\s\S]*?תעו/.test(fullText) ? 'תעו"ז' : 'רגיל';
     });
 
-function sendEmail(){
-  const subject = encodeURIComponent("נתוני חשבון חשמל");
+    function sendEmail() {
+      const subject = encodeURIComponent(
+        `נתוני חשבון חשמל – ${document.getElementById("name").value} – ${document.getElementById("address").value}`
+      );
+      const signature = "\n\nבברכה,\nמחשמל\nbsd0733452723@gmail.com";
 
-  const body = encodeURIComponent(
-`שם עמותה: ${document.getElementById("name").value}
+      const supplyAddressValue =
+        document.getElementById("supplyAddress")?.value;
+
+      const supplyAddressLine = supplyAddressValue
+        ? `כתובת אספקה: ${supplyAddressValue}`
+        : "";
+
+
+      const body = encodeURIComponent(
+        `שם עמותה: ${document.getElementById("name").value}
 מספר עמותה: ${document.getElementById("association").value}
 כתובת: ${document.getElementById("address").value}
+${supplyAddressLine}
 מספר חוזה: ${document.getElementById("contract").value}
 מספר מונה: ${document.getElementById("meter").value}
-תעריף: ${document.getElementById("tariff").value}
+סוג קריאה: ${document.getElementById("readingType").value}
 
 שם הבנק: ${document.getElementById("bankName").value}
 סניף: ${document.getElementById("bankBranch").value}
@@ -207,14 +314,18 @@ function sendEmail(){
 בעל החשבון: ${document.getElementById("bankHolder").value}
 
 טלפון: ${document.getElementById("phone").value}
-מייל: ${document.getElementById("email").value}`
-  );
+מייל: ${document.getElementById("email").value}
+שם איש קשר: ${document.getElementById("contactName").value}
+מייל לחשבוניות: ${document.getElementById("email").value}${signature}
+`
 
-  window.open(
-    `https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`,
-    "_blank"
-  );
-}
+      );
+
+      window.open(
+        `https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`,
+        "_blank"
+      );
+    }
 
   </script>
 
