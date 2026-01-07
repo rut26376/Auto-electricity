@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>נתוני חשמל</title>
-<link rel="icon" href="logo2.JPG" type="image/x-icon">
+<link rel="icon" href="logo3.png" type="image/x-icon">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
 <style>
@@ -135,7 +135,7 @@ button:hover {
     document.getElementById("pdfInput").addEventListener("change", async e => {
       const buffer = await e.target.files[0].arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
-
+      
       let fullText = "";
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
@@ -144,7 +144,6 @@ button:hover {
       }
 
       const lines = fullText.split("\n");
-
       // שם העמותה
       const nameMatch = fullText.match(/לכבוד:\s*\n\s*(.+)/);
       const orgName = nameMatch ? nameMatch[1].trim() : "";
@@ -183,7 +182,8 @@ document.getElementById("address").value = addressLines.join(" ");
 
       // מספר מונה
       document.getElementById("meter").value =
-        fullText.match(/מונה מספר:\s*(\d+)/)?.[1] || "";
+  fullText.match(/מונה מספר\s*(\d+)/)?.[1] || "";
+
 
       // תעו"ז / רגיל
       document.getElementById("tariff").value =
