@@ -178,6 +178,8 @@
 
 
     <button onclick="sendEmail()">שלח מייל</button>
+    <button onclick="sendPaymentRequest()">שלח דרישת תשלום</button>
+
 
   </div>
 
@@ -289,6 +291,7 @@
       const subject = encodeURIComponent(
         `נתוני חשבון חשמל – ${document.getElementById("name").value} – ${document.getElementById("address").value}`
       );
+
       const signature = "\n\nבברכה,\nמחשמל\nbsd0733452723@gmail.com";
 
       const supplyAddressValue =
@@ -298,9 +301,11 @@
         ? `כתובת אספקה: ${supplyAddressValue}`
         : "";
 
-
       const body = encodeURIComponent(
-        `שם עמותה: ${document.getElementById("name").value}
+        `נתוני חשבון חשמל
+====================
+    
+שם עמותה: ${document.getElementById("name").value}
 מספר עמותה: ${document.getElementById("association").value}
 כתובת: ${document.getElementById("address").value}
 ${supplyAddressLine}
@@ -308,21 +313,56 @@ ${supplyAddressLine}
 מספר מונה: ${document.getElementById("meter").value}
 סוג קריאה: ${document.getElementById("readingType").value}
 
+*** פרטי בנק ***
+-------------------
 שם הבנק: ${document.getElementById("bankName").value}
 סניף: ${document.getElementById("bankBranch").value}
 חשבון: ${document.getElementById("bankAccount").value}
 בעל החשבון: ${document.getElementById("bankHolder").value}
 
+*** פרטי יצירת קשר ***
+----------------------
 טלפון: ${document.getElementById("phone").value}
 מייל: ${document.getElementById("email").value}
 שם איש קשר: ${document.getElementById("contactName").value}
-מייל לחשבוניות: ${document.getElementById("email").value}${signature}
-`
+מייל לחשבוניות: ${document.getElementById("email").value}
+
+----------------------------
+נא להחזיר בבקשה מספר לקוח.
+${signature}`
+
 
       );
 
       window.open(
         `https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`,
+        "_blank"
+      );
+
+
+    }
+    function sendPaymentRequest() {
+      const orgName = document.getElementById("name").value;
+      const contactEmail = document.getElementById("email").value;
+      const contract = document.getElementById("contract").value;
+      const amount = ""; // אפשר להוסיף שדה נפרד לסכום אם תרצה
+
+      const subject = encodeURIComponent(`דרישת תשלום עבור חשבון חשמל – ${orgName}`);
+      const body = encodeURIComponent(
+        `שלום רב,
+
+מצ"ב דרישת תשלום עבור חשבון החשמל של העמותה: ${orgName}
+מספר חוזה: ${contract}
+
+נודה להעברת התשלום בהקדם.
+
+בברכה,
+מחשמל
+bsd0733452723@gmail.com`
+      );
+
+      window.open(
+        `https://mail.google.com/mail/?view=cm&fs=1&to=${contactEmail}&su=${subject}&body=${body}`,
         "_blank"
       );
     }
