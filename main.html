@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>ניהול מערכת חשמל</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="logo.JPG" alt="לוגו">
+    </div>
+
+    <div class="tabs">
+      <button onclick="goTo('index.html')">הפקת נתונים מחשבון</button>
+      <button onclick="goTo('fix.html')">השלמת פרטים חסרים</button>
+      <button onclick="goTo('clients.html')">רשימת לקוחות</button>
+      <button onclick="goTo('residential.html')">טופס לקוח ביתי</button>
+    </div>
+
+    <div class="card">
+      <h2>ברוך הבא למערכת ניהול חשבונות חשמל</h2>
+      <p>בחר פעולה מהטאבים למעלה</p>
+    </div>
+  </div>
+
+  <script>
+    function goTo(page) {
+      window.location.href = page;
+    }
+  </script>
+</body>
+</html>

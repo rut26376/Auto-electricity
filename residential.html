@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+
+<head>
+  <meta charset="UTF-8">
+  <title>טופס לקוח ביתי</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="logo.JPG" alt="לוגו">
+    </div>
+
+    <h2>טופס לקוח ביתי</h2>
+    <form id="residentialForm">
+      <div class="card">
+        <div class="label">שם מתרים</div>
+        <input class="field" name="שם מתרים">
+      </div>
+
+      <div class="card">
+        <div class="label">שם פרטי</div><input class="field" name="שם פרטי">
+      </div>
+      <div class="card">
+        <div class="label">שם משפחה</div><input class="field" name="שם משפחה">
+      </div>
+      <div class="card">
+        <div class="label">ת.ז.</div><input class="field" name="ת.ז.">
+      </div>
+      <div class="card">
+        <div class="label">נייד</div><input class="field" name="נייד">
+      </div>
+      <div class="card">
+        <div class="label">מייל</div><input class="field" name="מייל">
+      </div>
+      <div class="card">
+        <div class="label">ועד בית</div>
+        <select class="field" name="ועד בית">
+          <option value="כן">כן</option>
+          <option value="לא">לא</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="label">עיר</div><input class="field" name="עיר">
+      </div>
+      <div class="card">
+        <div class="label">רחוב</div><input class="field" name="רחוב">
+      </div>
+      <div class="card">
+        <div class="label">בנין</div><input class="field" name="בנין">
+      </div>
+      <div class="card">
+        <div class="label">דירה</div><input class="field" name="דירה">
+      </div>
+      <div class="card">
+        <div class="label">כניסה</div><input class="field" name="כניסה">
+      </div>
+      <div class="card">
+        <div class="label">קומה</div><input class="field" name="קומה">
+      </div>
+      <div class="card">
+        <div class="label">מספר חוזה</div><input class="field" name="מספר חוזה">
+      </div>
+      <div class="card">
+        <div class="label">מספר מונה</div><input class="field" name="מספר מונה">
+      </div>
+      <div class="card">
+        <div class="label">סוג תעריף</div>
+        <select class="field" name="סוג תעריף">
+          <option value="א">א</option>
+          <option value="ב">ב</option>
+          <option value="ג">ג</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="label">שם בן הזוג</div><input class="field" name="שם בן הזוג">
+      </div>
+
+      <button type="button" onclick="chooseExcel()">בחר קובץ אקסל</button>
+      <button type="button" onclick="appendToExcel()">שמור</button>
+    </form>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <script>
+    let excelFileHandle;
+
+    async function chooseExcel() {
+      try {
+        [excelFileHandle] = await window.showOpenFilePicker({
+          types: [{
+            description: 'Excel Files',
+            accept: {
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx']
+            }
+          }]
+        });
+        alert("הקובץ נבחר בהצלחה");
+      } catch (err) {
+        alert("בחירת קובץ בוטלה");
+      }
+    }
+
+    async function appendToExcel() {
+      try {
+        if (!excelFileHandle) {
+          alert("יש לבחור קובץ קודם");
+          return;
+        }
+
+        const file = await excelFileHandle.getFile();
+        const arrayBuffer = await file.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: "array" });
+
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const existingData = XLSX.utils.sheet_to_json(worksheet);
+
+        const form = document.getElementById("residentialForm");
+        const data = {};
+        [...form.elements].forEach(el => {
+          if (el.name) data[el.name] = el.value.trim() || "חסר";
+        });
+
+        existingData.push(data);
+        const newSheet = XLSX.utils.json_to_sheet(existingData, { header: Object.keys(data) });
+        workbook.Sheets[sheetName] = newSheet;
+
+        const updatedArrayBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+        const writable = await excelFileHandle.createWritable();
+        await writable.write(updatedArrayBuffer);
+        await writable.close();
+
+        alert("השמירה בוצעה בהצלחה");
+      } catch (err) {
+        if (err.name === "InvalidStateError") {
+          alert("לא ניתן לשמור לקובץ כשהוא פתוח ב־Excel. נא לסגור את הקובץ ולנסות שוב.");
+        } else {
+          alert("שגיאה בשמירה: " + err.message);
+        }
+      }
+    }
+  </script>
+</body>
+
+</html>
