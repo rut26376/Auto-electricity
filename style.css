@@ -91,3 +91,80 @@ button:hover {
 h2 {
   margin-top: 0;
 }
+.popup {
+  position: fixed;
+  top: 40%;
+  right: 50%;
+  transform: translate(50%, -50%);
+  background-color: #ffffff;
+  border: 2px solid #0047ab;
+  padding: 30px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  border-radius: 8px;
+  width: 300px;
+  text-align: center;
+  font-family: inherit;
+  font-size: 1.1em;
+  direction: rtl;
+}
+
+.popup button {
+  margin-top: 20px;
+  padding: 8px 16px;
+  background-color: #0047ab;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.popup button:hover {
+  background-color: #0061ff;
+}
+
+.hidden {
+  display: none;
+}
+.radio-group {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 15px;
+}
+
+.radio-group input[type="radio"] {
+  display: none;
+}
+
+.radio-group label {
+  background-color: var(--card);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-weight: bold;
+  color: var(--primary);
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+.radio-group input[type="radio"]:checked + label {
+  background-color: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+/* התאמה לקליק על label */
+.radio-group label input {
+  display: none;
+}
+
+.radio-group label:has(input:checked) {
+  background-color: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+.choose-excel {
+  width: auto;
+  margin-bottom: 20px;
+  align-self: center;
+}
