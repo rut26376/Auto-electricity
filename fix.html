@@ -1,29 +1,34 @@
-<!-- fix.html -->
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
+
 <head>
   <meta charset="UTF-8">
-  <title>עדכון לקוח</title>
+  <title>תיקון פרטי לקוח</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
+
 <body>
   <div class="container">
     <div class="header">
-      <button id="filePickerBtn">בחר קובץ אקסל</button>
       <img src="logo.JPG" alt="לוגו">
     </div>
+    <div class="upload-section">
+      <button type="button" id="uploadButton" class="choose-excel">בחר קובץ אקסל</button>
+    </div>
 
-    <h2>עדכון פרטי לקוח</h2>
 
-    <label for="clientSearch">חפש לפי שם פרטי או משפחה:</label>
-    <input type="text" id="clientSearch" placeholder="הקלד שם לקוח">
-    <select id="clientList" size="5"></select>
+    <h2>תיקון פרטי לקוח</h2>
 
-    <form id="editForm" class="hidden">
-      <div id="fieldsContainer"></div>
-      <button type="button" onclick="saveChanges()">שמירה לקובץ</button>
-    </form>
+    <label class="label" for="searchInput">חפש לפי שם פרטי או משפחה:</label>
+    <input type="text" id="searchInput" class="field" placeholder="הקלד שם...">
+
+    <select id="clientList" class="field"></select>
+
+
+    <div id="clientDetails" class="client-details card"></div>
+
+    <button id="saveButton">שמירה</button>
 
     <div id="popup" class="popup hidden">
       <p id="popupText"></p>
@@ -32,9 +37,8 @@
   </div>
 
   <script>
+    let selectedFileHandle;
     let workbookData = [];
-    let headers = [];
-    let selectedRowIndex = null;
 
     function showAlert(message) {
       document.getElementById("popupText").innerText = message;
@@ -44,92 +48,115 @@
     function closePopup() {
       document.getElementById("popup").classList.add("hidden");
     }
+function populateClientList() {
+  const list = document.getElementById('clientList');
+  list.innerHTML = "";
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  let matchedCount = 0;
 
-    document.getElementById("filePickerBtn").addEventListener("click", async () => {
+  // הוספת אופציות לכל הלקוחות שמתאימים לחיפוש
+  workbookData.slice(1).forEach((row, index) => {
+    const fullName = `${row[1] || ""} ${row[2] || ""}`.trim();
+    if (fullName.includes(search)) {
+      const option = document.createElement('option');
+      option.value = index + 1;
+      option.textContent = fullName;
+      list.appendChild(option);
+      matchedCount++;
+    }
+  });
+
+  // אם אין תוצאות, נסתר את הרשימה
+  if (matchedCount === 0) {
+    list.style.display = 'none';
+  } else {
+    list.style.display = 'block';
+    // קביעת גובה הרשימה - עד 5 אפשרויות תצוגה
+    list.size = Math.min(matchedCount, 5);
+  }
+
+  // אם יש רק לקוח אחד, בחר אותו אוטומטית
+  if (matchedCount === 1) {
+    list.selectedIndex = 0;
+    list.dispatchEvent(new Event("change"));
+  }
+}
+
+
+    document.getElementById("searchInput").addEventListener("input", populateClientList);
+
+    document.getElementById("clientList").addEventListener("change", function () {
+      const index = this.value;
+      const row = workbookData[index];
+      const container = document.getElementById("clientDetails");
+      container.innerHTML = "";
+      if (!row) return;
+
+      const headers = workbookData[0];
+      row.forEach((cell, i) => {
+        const label = headers[i] || `שדה ${i + 1}`;
+        const input = document.createElement("input");
+        input.value = cell || "";
+        input.dataset.index = i;
+        input.className = "field";
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "field-wrapper";
+        wrapper.innerHTML = `<div class="label">${label}:</div>`;
+        wrapper.appendChild(input);
+
+        container.appendChild(wrapper);
+      });
+    });
+
+    document.getElementById("saveButton").addEventListener("click", async () => {
+      const selected = document.getElementById("clientList").value;
+      if (!selected) {
+        showAlert("לא נבחר לקוח");
+        return;
+      }
+
+      const inputs = document.querySelectorAll("#clientDetails input");
+      inputs.forEach(input => {
+        const colIndex = parseInt(input.dataset.index);
+        workbookData[selected][colIndex] = input.value;
+      });
+
       try {
-        const [fileHandle] = await window.showOpenFilePicker();
-        window.selectedFileHandle = fileHandle;
-        const file = await fileHandle.getFile();
+        const worksheet = XLSX.utils.aoa_to_sheet(workbookData);
+        const newWorkbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(newWorkbook, worksheet, "Sheet1");
+        const wbout = XLSX.write(newWorkbook, { bookType: "xlsx", type: "array" });
+        const writable = await selectedFileHandle.createWritable();
+        await writable.write(wbout);
+        await writable.close();
+        showAlert("הנתונים נשמרו בהצלחה");
+      } catch (error) {
+        showAlert("שגיאה בשמירה: " + error.message);
+      }
+    });
+
+    document.getElementById("uploadButton").addEventListener("click", async () => {
+      try {
+        [selectedFileHandle] = await window.showOpenFilePicker();
+        const file = await selectedFileHandle.getFile();
         const arrayBuffer = await file.arrayBuffer();
         const workbook = XLSX.read(arrayBuffer, { type: "array" });
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-        const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
-        headers = data[0];
-        workbookData = data.slice(1);
-
+        workbookData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
         populateClientList();
         showAlert("הקובץ נטען בהצלחה");
       } catch (err) {
-        showAlert("שגיאה בטעינת הקובץ");
+        showAlert("שגיאה בטעינת קובץ: " + err.message);
       }
     });
 
-    function populateClientList(filter = "") {
-      const list = document.getElementById("clientList");
-      list.innerHTML = "";
-
-      workbookData.forEach((row, index) => {
-        const fullName = (row[1] || "") + " " + (row[2] || "");
-        if (fullName.includes(filter)) {
-          const option = document.createElement("option");
-          option.value = index;
-          option.textContent = fullName;
-          list.appendChild(option);
-        }
-      });
-    }
-
-    document.getElementById("clientSearch").addEventListener("input", e => {
-      populateClientList(e.target.value);
-    });
-
-    document.getElementById("clientList").addEventListener("change", e => {
-      const index = parseInt(e.target.value);
-      if (!isNaN(index)) {
-        selectedRowIndex = index;
-        populateEditForm(workbookData[index]);
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Enter" && !document.getElementById("popup").classList.contains("hidden")) {
+        closePopup();
       }
     });
-
-    function populateEditForm(row) {
-      const container = document.getElementById("fieldsContainer");
-      container.innerHTML = "";
-      document.getElementById("editForm").classList.remove("hidden");
-
-      headers.forEach((header, i) => {
-        const label = document.createElement("label");
-        label.textContent = header + ": ";
-        const input = document.createElement("input");
-        input.type = "text";
-        input.value = row[i] || "";
-        input.dataset.index = i;
-        label.appendChild(input);
-        container.appendChild(label);
-      });
-    }
-
-    async function saveChanges() {
-      if (selectedRowIndex === null) return;
-
-      const inputs = document.querySelectorAll("#fieldsContainer input");
-      inputs.forEach(input => {
-        const i = parseInt(input.dataset.index);
-        workbookData[selectedRowIndex][i] = input.value;
-      });
-
-      const updatedData = [headers, ...workbookData];
-      const worksheet = XLSX.utils.aoa_to_sheet(updatedData);
-      const newWorkbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(newWorkbook, worksheet, "Sheet1");
-
-      const wbout = XLSX.write(newWorkbook, { bookType: "xlsx", type: "array" });
-      const writable = await window.selectedFileHandle.createWritable();
-      await writable.write(wbout);
-      await writable.close();
-
-      showAlert("השינויים נשמרו בהצלחה");
-    }
   </script>
 </body>
+
 </html>

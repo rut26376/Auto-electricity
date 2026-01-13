@@ -39,8 +39,8 @@
       <div class="card">
         <div class="label">ועד בית:</div>
         <div class="radio-group">
-          <label><input type="radio" name="vaad" value="כן"> כן</label>
-          <label><input type="radio" name="vaad" value="לא"> לא</label>
+          <label><input type="radio" name="ועד בית" value="כן"> כן</label>
+          <label><input type="radio" name="ועד בית" value="לא"> לא</label>
         </div>
 
       </div>
@@ -71,13 +71,13 @@
       <div class="card">
         <div class="label">סוג תעריף:</div>
         <div class="radio-group">
-          <input type="radio" id="tariffA" name="tariff" value="א">
+          <input type="radio" id="tariffA" name="סוג התעריף" value="א">
           <label for="tariffA">א</label>
 
-          <input type="radio" id="tariffB" name="tariff" value="ב">
+          <input type="radio" id="tariffB" name="סוג התעריף" value="ב">
           <label for="tariffB">ב</label>
 
-          <input type="radio" id="tariffC" name="tariff" value="ג">
+          <input type="radio" id="tariffC" name="סוג התעריף" value="ג">
           <label for="tariffC">ג</label>
         </div>
 
@@ -152,7 +152,7 @@
         const form = document.getElementById("residentialForm");
         const data = {};
         [...form.elements].forEach(el => {
-          if (el.name) data[el.name] = el.value.trim() || "חסר";
+          if (el.name) data[el.name] = el.value.trim() || "";
         });
 
         existingData.push(data);
