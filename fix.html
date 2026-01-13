@@ -1,18 +1,135 @@
+<!-- fix.html -->
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <title>השלמת פרטים חסרים</title>
+  <title>עדכון לקוח</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
   <div class="container">
     <div class="header">
+      <button id="filePickerBtn">בחר קובץ אקסל</button>
       <img src="logo.JPG" alt="לוגו">
     </div>
 
-    <h2>השלמת פרטים חסרים</h2>
-    <p>כאן יוצגו פרטים חסרים שניתן להשלים</p>
+    <h2>עדכון פרטי לקוח</h2>
+
+    <label for="clientSearch">חפש לפי שם פרטי או משפחה:</label>
+    <input type="text" id="clientSearch" placeholder="הקלד שם לקוח">
+    <select id="clientList" size="5"></select>
+
+    <form id="editForm" class="hidden">
+      <div id="fieldsContainer"></div>
+      <button type="button" onclick="saveChanges()">שמירה לקובץ</button>
+    </form>
+
+    <div id="popup" class="popup hidden">
+      <p id="popupText"></p>
+      <button onclick="closePopup()">אישור</button>
+    </div>
   </div>
+
+  <script>
+    let workbookData = [];
+    let headers = [];
+    let selectedRowIndex = null;
+
+    function showAlert(message) {
+      document.getElementById("popupText").innerText = message;
+      document.getElementById("popup").classList.remove("hidden");
+    }
+
+    function closePopup() {
+      document.getElementById("popup").classList.add("hidden");
+    }
+
+    document.getElementById("filePickerBtn").addEventListener("click", async () => {
+      try {
+        const [fileHandle] = await window.showOpenFilePicker();
+        window.selectedFileHandle = fileHandle;
+        const file = await fileHandle.getFile();
+        const arrayBuffer = await file.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: "array" });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+        headers = data[0];
+        workbookData = data.slice(1);
+
+        populateClientList();
+        showAlert("הקובץ נטען בהצלחה");
+      } catch (err) {
+        showAlert("שגיאה בטעינת הקובץ");
+      }
+    });
+
+    function populateClientList(filter = "") {
+      const list = document.getElementById("clientList");
+      list.innerHTML = "";
+
+      workbookData.forEach((row, index) => {
+        const fullName = (row[1] || "") + " " + (row[2] || "");
+        if (fullName.includes(filter)) {
+          const option = document.createElement("option");
+          option.value = index;
+          option.textContent = fullName;
+          list.appendChild(option);
+        }
+      });
+    }
+
+    document.getElementById("clientSearch").addEventListener("input", e => {
+      populateClientList(e.target.value);
+    });
+
+    document.getElementById("clientList").addEventListener("change", e => {
+      const index = parseInt(e.target.value);
+      if (!isNaN(index)) {
+        selectedRowIndex = index;
+        populateEditForm(workbookData[index]);
+      }
+    });
+
+    function populateEditForm(row) {
+      const container = document.getElementById("fieldsContainer");
+      container.innerHTML = "";
+      document.getElementById("editForm").classList.remove("hidden");
+
+      headers.forEach((header, i) => {
+        const label = document.createElement("label");
+        label.textContent = header + ": ";
+        const input = document.createElement("input");
+        input.type = "text";
+        input.value = row[i] || "";
+        input.dataset.index = i;
+        label.appendChild(input);
+        container.appendChild(label);
+      });
+    }
+
+    async function saveChanges() {
+      if (selectedRowIndex === null) return;
+
+      const inputs = document.querySelectorAll("#fieldsContainer input");
+      inputs.forEach(input => {
+        const i = parseInt(input.dataset.index);
+        workbookData[selectedRowIndex][i] = input.value;
+      });
+
+      const updatedData = [headers, ...workbookData];
+      const worksheet = XLSX.utils.aoa_to_sheet(updatedData);
+      const newWorkbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(newWorkbook, worksheet, "Sheet1");
+
+      const wbout = XLSX.write(newWorkbook, { bookType: "xlsx", type: "array" });
+      const writable = await window.selectedFileHandle.createWritable();
+      await writable.write(wbout);
+      await writable.close();
+
+      showAlert("השינויים נשמרו בהצלחה");
+    }
+  </script>
 </body>
 </html>
