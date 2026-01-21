@@ -1,158 +1,232 @@
-<!-- fix.html -->
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 
 <head>
   <meta charset="UTF-8">
-  <title>תיקון פרטי לקוח</title>
+  <title>תיקון נתוני לקוח</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    .active {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .upload-success {
+      color: green;
+      font-size: 14px;
+      margin-top: 4px;
+    }
+  </style>
 </head>
 
-<body>
+<body onload="switchTab('residential')">
   <div class="container">
     <div class="header">
       <img src="logo.JPG" alt="לוגו">
     </div>
-    <div class="upload-section">
-      <button type="button" id="uploadButton" class="choose-excel">בחר קובץ אקסל</button>
+
+    <div class="tabs">
+      <button id="tabBtnResidential" onclick="switchTab('residential')">לקוח ביתי</button>
+      <button id="tabBtnBusiness" onclick="switchTab('business')">לקוח עסקי</button>
     </div>
 
-    <h2>תיקון פרטי לקוח</h2>
-    <label class="label" for="searchInput">חפש לפי שם פרטי או משפחה:</label>
-    <input type="text" id="searchInput" class="field" placeholder="הקלד שם...">
-    <select id="clientList" class="field"></select>
-    <div id="clientDetails" class="client-details card"></div>
-    <button id="saveButton">שמירה</button>
+    <div id="residentialTab">
+      <button type="button" onclick="chooseExcelResidential()" class="choose-excel">בחר קובץ אקסל</button>
+      <input type="text" id="searchInputResidential" class="field" placeholder="חפש לפי שם פרטי או משפחה"
+        oninput="filterClients('residential')">
+      <select id="clientListResidential" size="8" class="field" onchange="loadClientData('residential')"></select>
+      <form id="clientFormResidential"></form>
+      <button id="saveBtnResidential" type="button" onclick="saveChanges('residential')">שמור שינויים</button>
+    </div>
 
-    <div id="popup" class="popup hidden">
+    <div id="businessTab" class="hidden">
+      <button type="button" onclick="chooseExcelBusiness()" class="choose-excel">בחר קובץ אקסל</button>
+      <button type="button" onclick="chooseBusinessFolder()" class="choose-excel">בחר תיקיית שמירה</button>
+      <input type="text" id="searchInputBusiness" class="field" placeholder="חפש לפי שם חברה או ת.ז."
+        oninput="filterClients('business')">
+      <select id="clientListBusiness" size="8" class="field" onchange="loadClientData('business')"></select>
+      <form id="clientFormBusiness"></form>
+      <button id="saveBtnBusiness" type="button" onclick="saveChanges('business')">שמור שינויים</button>
+    </div>
+
+    <div id="popup" class="popup hidden" tabindex="0">
       <p id="popupText"></p>
       <button onclick="closePopup()">אישור</button>
     </div>
   </div>
 
   <script>
-    let selectedFileHandle;
-    let workbookData = [];
+    let workbookResidential, selectedIndexResidential;
+    let workbookBusiness, selectedIndexBusiness;
+    let residentialFileHandle, businessFileHandle;
+    let businessFolderHandle;
 
-    function showAlert(message) {
-      document.getElementById("popupText").innerText = message;
-      document.getElementById("popup").classList.remove("hidden");
+    function switchTab(tab) {
+      document.getElementById("residentialTab").classList.add("hidden");
+      document.getElementById("businessTab").classList.add("hidden");
+      document.getElementById("tabBtnResidential").classList.remove("active");
+      document.getElementById("tabBtnBusiness").classList.remove("active");
+      document.getElementById(tab + "Tab").classList.remove("hidden");
+      document.getElementById("tabBtn" + capitalize(tab)).classList.add("active");
     }
 
+    function showPopup(msg) {
+      document.getElementById("popupText").innerText = msg;
+      const popup = document.getElementById("popup");
+      popup.classList.remove("hidden");
+      popup.focus();
+    }
     function closePopup() {
       document.getElementById("popup").classList.add("hidden");
     }
 
-    function populateClientList() {
-      const list = document.getElementById('clientList');
+    async function chooseExcelResidential() {
+      [residentialFileHandle] = await window.showOpenFilePicker();
+      const file = await residentialFileHandle.getFile();
+      const data = await file.arrayBuffer();
+      workbookResidential = XLSX.read(data);
+      populateClientList("residential", workbookResidential);
+    }
+
+    async function chooseExcelBusiness() {
+      [businessFileHandle] = await window.showOpenFilePicker();
+      const file = await businessFileHandle.getFile();
+      const data = await file.arrayBuffer();
+      workbookBusiness = XLSX.read(data);
+      populateClientList("business", workbookBusiness);
+    }
+
+    async function chooseBusinessFolder() {
+      businessFolderHandle = await window.showDirectoryPicker();
+    }
+
+    function populateClientList(type, wb) {
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws);
+      const list = document.getElementById("clientList" + capitalize(type));
       list.innerHTML = "";
-      const search = document.getElementById('searchInput').value.toLowerCase();
-      let matchedCount = 0;
-
-      workbookData.slice(1).forEach((row, index) => {
-        const fullName = `${row[1] || ""} ${row[2] || ""}`.trim();
-        if (fullName.includes(search)) {
-          const option = document.createElement('option');
-          option.value = index + 1;
-          option.textContent = fullName;
-          list.appendChild(option);
-          matchedCount++;
-        }
+      data.forEach((row, index) => {
+        const key = type === 'residential' ? `${row["שם פרטי"] || ""} ${row["שם משפחה"] || ""}` : `${row["שם חברה"] || ""} ${row["ת.ז."] || ""}`;
+        const option = new Option(key, index);
+        list.appendChild(option);
       });
+    }
 
-      if (matchedCount === 0) {
-        list.style.display = 'none';
-      } else {
-        list.style.display = 'block';
-        list.size = Math.min(matchedCount, 5);
-      }
-
-      if (matchedCount === 1) {
-        list.selectedIndex = 0;
-        list.dispatchEvent(new Event("change"));
+    function filterClients(type) {
+      const input = document.getElementById("searchInput" + capitalize(type)).value.toLowerCase();
+      const list = document.getElementById("clientList" + capitalize(type));
+      for (let i = 0; i < list.options.length; i++) {
+        const option = list.options[i];
+        option.style.display = option.textContent.toLowerCase().includes(input) ? "block" : "none";
       }
     }
 
-    document.getElementById("searchInput").addEventListener("input", populateClientList);
+    function loadClientData(type) {
+      const list = document.getElementById("clientList" + capitalize(type));
+      const index = list.selectedIndex;
+      if (index === -1) return;
+      const wb = (type === 'residential') ? workbookResidential : workbookBusiness;
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws);
+      const row = data[index];
+      if (type === 'residential') selectedIndexResidential = index; else selectedIndexBusiness = index;
+      const form = document.getElementById("clientForm" + capitalize(type));
+      form.innerHTML = "";
 
-    document.getElementById("clientList").addEventListener("change", function () {
-      const index = this.value;
-      const row = workbookData[index];
-      const container = document.getElementById("clientDetails");
-      container.innerHTML = "";
-      if (!row) return;
+      for (const key in row) {
+        const label = document.createElement("label");
+        label.textContent = key;
+        label.className = "label";
+        form.appendChild(label);
 
-      const headers = workbookData[0];
-      row.forEach((cell, i) => {
-        const label = headers[i] || `שדה ${i + 1}`;
         const input = document.createElement("input");
-        input.value = cell || "";
-        input.dataset.index = i;
+        input.name = key;
         input.className = "field";
+        input.value = row[key];
+        form.appendChild(input);
 
-        const wrapper = document.createElement("div");
-        wrapper.className = "field-wrapper";
-        wrapper.innerHTML = `<div class="label">${label}:</div>`;
-        wrapper.appendChild(input);
-        container.appendChild(wrapper);
-      });
-    });
+        if (type === 'business' && key.includes("קובץ")) {
+          const fileInput = document.createElement("input");
+          fileInput.type = "file";
+          fileInput.className = "field";
+          fileInput.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file || !businessFolderHandle) return;
+            const folderName = `${row["שם חברה"] || "ללא_שם"}_${row["ת.ז."] || "000"}`.replace(/[\\/:*?"<>|]/g, '_');
+            const clientDir = await businessFolderHandle.getDirectoryHandle(folderName, { create: true });
+            const fileHandle = await clientDir.getFileHandle(file.name, { create: true });
+            const writable = await fileHandle.createWritable();
+            await writable.write(await file.arrayBuffer());
+            await writable.close();
 
-    document.getElementById("saveButton").addEventListener("click", async () => {
-      const selected = document.getElementById("clientList").value;
-      if (!selected) {
-        showAlert("לא נבחר לקוח");
+            const note = document.createElement("div");
+            note.className = "upload-success";
+            note.innerText = "✓ הקובץ הועלה בהצלחה";
+            form.appendChild(note);
+
+            input.value = file.name;
+          };
+          form.appendChild(fileInput);
+        }
+      }
+    }
+
+    async function saveChanges(type) {
+      const button = document.getElementById("saveBtn" + capitalize(type));
+      const originalText = button.innerText;
+      button.innerText = "שומר...";
+      button.disabled = true;
+
+      const wb = (type === 'residential') ? workbookResidential : workbookBusiness;
+      const handle = (type === 'residential') ? residentialFileHandle : businessFileHandle;
+      const idx = (type === 'residential') ? selectedIndexResidential : selectedIndexBusiness;
+
+      if (!handle) {
+        showPopup("יש לבחור קובץ אקסל לפני השמירה");
+        button.innerText = originalText;
+        button.disabled = false;
         return;
       }
 
-      try {
-        const file = await selectedFileHandle.getFile();
-        const arrayBuffer = await file.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer, { type: "array" });
-        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-        const currentData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const allData = XLSX.utils.sheet_to_json(ws);
 
-        const inputs = document.querySelectorAll("#clientDetails input");
-        inputs.forEach(input => {
-          const colIndex = parseInt(input.dataset.index);
-          currentData[selected][colIndex] = input.value;
-        });
-
-        const newSheet = XLSX.utils.aoa_to_sheet(currentData);
-        const newWorkbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(newWorkbook, newSheet, "Sheet1");
-        const wbout = XLSX.write(newWorkbook, { bookType: "xlsx", type: "array" });
-
-        const writable = await selectedFileHandle.createWritable();
-        await writable.write(wbout);
-        await writable.close();
-        showAlert("הנתונים נשמרו בהצלחה");
-      } catch (error) {
-        showAlert("שגיאה בשמירה: " + error.message);
+      if (idx === undefined || idx < 0 || idx >= allData.length) {
+        showPopup("יש לבחור לקוח לפני שמירה");
+        button.innerText = originalText;
+        button.disabled = false;
+        return;
       }
-    });
 
-    document.getElementById("uploadButton").addEventListener("click", async () => {
-      try {
-        [selectedFileHandle] = await window.showOpenFilePicker();
-        const file = await selectedFileHandle.getFile();
-        const arrayBuffer = await file.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer, { type: "array" });
-        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-        workbookData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-        populateClientList();
-        showAlert("הקובץ נטען בהצלחה");
-      } catch (err) {
-        showAlert("שגיאה בטעינת קובץ: " + err.message);
-      }
-    });
+      const form = document.getElementById("clientForm" + capitalize(type));
+      const inputs = form.querySelectorAll("input");
+      const data = {};
+      inputs.forEach(input => data[input.name] = input.value);
 
-    document.addEventListener("keydown", function (event) {
-      if (event.key === "Enter" && !document.getElementById("popup").classList.contains("hidden")) {
-        closePopup();
+      allData[idx] = data;
+      const newSheet = XLSX.utils.json_to_sheet(allData);
+      wb.Sheets[wb.SheetNames[0]] = newSheet;
+      const binaryString = XLSX.write(wb, { bookType: "xlsx", type: "binary" });
+      const buffer = new ArrayBuffer(binaryString.length);
+      const view = new Uint8Array(buffer);
+      for (let i = 0; i < binaryString.length; ++i) {
+        view[i] = binaryString.charCodeAt(i) & 0xFF;
       }
-    });
+      const blob = new Blob([buffer], { type: "application/octet-stream" });
+
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+
+      button.innerText = originalText;
+      button.disabled = false;
+      showPopup("הנתונים נשמרו בהצלחה.");
+    }
+
+    function capitalize(txt) {
+      return txt.charAt(0).toUpperCase() + txt.slice(1);
+    }
   </script>
 </body>
 
