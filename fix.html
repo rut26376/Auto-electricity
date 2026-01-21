@@ -1,3 +1,4 @@
+<!-- fix.html -->
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 
@@ -17,17 +18,11 @@
       <button type="button" id="uploadButton" class="choose-excel">בחר קובץ אקסל</button>
     </div>
 
-
     <h2>תיקון פרטי לקוח</h2>
-
     <label class="label" for="searchInput">חפש לפי שם פרטי או משפחה:</label>
     <input type="text" id="searchInput" class="field" placeholder="הקלד שם...">
-
     <select id="clientList" class="field"></select>
-
-
     <div id="clientDetails" class="client-details card"></div>
-
     <button id="saveButton">שמירה</button>
 
     <div id="popup" class="popup hidden">
@@ -48,40 +43,36 @@
     function closePopup() {
       document.getElementById("popup").classList.add("hidden");
     }
-function populateClientList() {
-  const list = document.getElementById('clientList');
-  list.innerHTML = "";
-  const search = document.getElementById('searchInput').value.toLowerCase();
-  let matchedCount = 0;
 
-  // הוספת אופציות לכל הלקוחות שמתאימים לחיפוש
-  workbookData.slice(1).forEach((row, index) => {
-    const fullName = `${row[1] || ""} ${row[2] || ""}`.trim();
-    if (fullName.includes(search)) {
-      const option = document.createElement('option');
-      option.value = index + 1;
-      option.textContent = fullName;
-      list.appendChild(option);
-      matchedCount++;
+    function populateClientList() {
+      const list = document.getElementById('clientList');
+      list.innerHTML = "";
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      let matchedCount = 0;
+
+      workbookData.slice(1).forEach((row, index) => {
+        const fullName = `${row[1] || ""} ${row[2] || ""}`.trim();
+        if (fullName.includes(search)) {
+          const option = document.createElement('option');
+          option.value = index + 1;
+          option.textContent = fullName;
+          list.appendChild(option);
+          matchedCount++;
+        }
+      });
+
+      if (matchedCount === 0) {
+        list.style.display = 'none';
+      } else {
+        list.style.display = 'block';
+        list.size = Math.min(matchedCount, 5);
+      }
+
+      if (matchedCount === 1) {
+        list.selectedIndex = 0;
+        list.dispatchEvent(new Event("change"));
+      }
     }
-  });
-
-  // אם אין תוצאות, נסתר את הרשימה
-  if (matchedCount === 0) {
-    list.style.display = 'none';
-  } else {
-    list.style.display = 'block';
-    // קביעת גובה הרשימה - עד 5 אפשרויות תצוגה
-    list.size = Math.min(matchedCount, 5);
-  }
-
-  // אם יש רק לקוח אחד, בחר אותו אוטומטית
-  if (matchedCount === 1) {
-    list.selectedIndex = 0;
-    list.dispatchEvent(new Event("change"));
-  }
-}
-
 
     document.getElementById("searchInput").addEventListener("input", populateClientList);
 
@@ -104,7 +95,6 @@ function populateClientList() {
         wrapper.className = "field-wrapper";
         wrapper.innerHTML = `<div class="label">${label}:</div>`;
         wrapper.appendChild(input);
-
         container.appendChild(wrapper);
       });
     });
@@ -116,17 +106,24 @@ function populateClientList() {
         return;
       }
 
-      const inputs = document.querySelectorAll("#clientDetails input");
-      inputs.forEach(input => {
-        const colIndex = parseInt(input.dataset.index);
-        workbookData[selected][colIndex] = input.value;
-      });
-
       try {
-        const worksheet = XLSX.utils.aoa_to_sheet(workbookData);
+        const file = await selectedFileHandle.getFile();
+        const arrayBuffer = await file.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: "array" });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const currentData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+        const inputs = document.querySelectorAll("#clientDetails input");
+        inputs.forEach(input => {
+          const colIndex = parseInt(input.dataset.index);
+          currentData[selected][colIndex] = input.value;
+        });
+
+        const newSheet = XLSX.utils.aoa_to_sheet(currentData);
         const newWorkbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(newWorkbook, worksheet, "Sheet1");
+        XLSX.utils.book_append_sheet(newWorkbook, newSheet, "Sheet1");
         const wbout = XLSX.write(newWorkbook, { bookType: "xlsx", type: "array" });
+
         const writable = await selectedFileHandle.createWritable();
         await writable.write(wbout);
         await writable.close();

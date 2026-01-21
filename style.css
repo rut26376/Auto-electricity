@@ -58,9 +58,10 @@ body {
 }
 
 .label {
-  font-size: 13px;
-  color: #6b7280;
-  margin-bottom: 4px;
+  font-size: 18px;
+  font-weight: bold;
+  color: #374151;
+  margin-bottom: 6px;
 }
 
 .field, select {
@@ -91,6 +92,7 @@ button:hover {
 h2 {
   margin-top: 0;
 }
+
 .popup {
   position: fixed;
   top: 40%;
@@ -126,6 +128,7 @@ h2 {
 .hidden {
   display: none;
 }
+
 .radio-group {
   display: flex;
   gap: 20px;
@@ -153,7 +156,6 @@ h2 {
   border-color: var(--primary);
 }
 
-/* התאמה לקליק על label */
 .radio-group label input {
   display: none;
 }
@@ -163,6 +165,7 @@ h2 {
   color: white;
   border-color: var(--primary);
 }
+
 .choose-excel {
   width: auto;
   margin-bottom: 20px;
@@ -181,6 +184,7 @@ h2 {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   margin-bottom: 20px;
 }
+
 #clientList {
   width: 100%;
   padding: 8px;
@@ -189,4 +193,23 @@ h2 {
   border-radius: 4px;
   background-color: #fff;
   direction: rtl;
+}
+input[type="file"] {
+  display: none;
+}
+
+.upload-label {
+  display: inline-block;
+  background-color: var(--primary);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  text-align: center;
+  margin-top: 6px;
+}
+
+.upload-label:hover {
+  opacity: 0.9;
 }

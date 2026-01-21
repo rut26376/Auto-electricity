@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+
+
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>לקוח עסקי</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="logo.JPG" alt="לוגו" />
+    </div>
+
+    <button type="button" onclick="chooseExcel()" id="excelBtn" class="choose-excel">בחר קובץ אקסל</button>
+    <button type="button" onclick="chooseFolder()" id="folderBtn" class="choose-excel">בחר תיקיית שמירה</button>
+
+    <h2>טופס לקוח עסקי</h2>
+    <form id="businessForm">
+      <!-- שדות לקוח -->
+      <div class="card"><div class="label">ת.ז.</div><input class="field" name="ת.ז."></div>
+      <div class="card"><div class="label">שם פרטי</div><input class="field" name="שם פרטי"></div>
+      <div class="card"><div class="label">שם משפחה</div><input class="field" name="שם משפחה"></div>
+      <div class="card"><div class="label">שם חברה</div><input class="field" name="שם חברה"></div>
+      <div class="card"><div class="label">חפ/עסק מורשה</div><input class="field" name="חפ"></div>
+      <div class="card"><div class="label">עיר</div><input class="field" name="עיר"></div>
+      <div class="card"><div class="label">כתובת</div><input class="field" name="כתובת"></div>
+      <div class="card"><div class="label">מס בנין</div><input class="field" name="מס בנין"></div>
+      <div class="card"><div class="label">מיקוד</div><input class="field" name="מיקוד"></div>
+      <div class="card"><div class="label">מס בית</div><input class="field" name="מס בית"></div>
+      <div class="card"><div class="label">טלפון</div><input class="field" name="טלפון"></div>
+      <div class="card"><div class="label">דוא\"ל</div><input class="field" name="דוא\"ל"></div>
+      <div class="card"><div class="label">מס מונה</div><input class="field" name="מס מונה"></div>
+      <div class="card"><div class="label">מס חשבון חוזה</div><input class="field" name="מס חשבון חוזה"></div>
+      <div class="card"><div class="label">קוד מונה</div><input class="field" name="קוד מונה"></div>
+      <div class="card"><div class="label">כללי/תעוז</div><input class="field" name="כללי/תעוז"></div>
+      <div class="card"><div class="label">מספר אשראי</div><input class="field" name="מספר אשראי"></div>
+      <div class="card"><div class="label">CVV</div><input class="field" name="CVV"></div>
+      <div class="card"><div class="label">תוקף</div><input class="field" name="תוקף"></div>
+
+      <!-- קבצים -->
+      <div class="card"><div class="label">טופס איש קשר</div><label class="upload-label">בחר קובץ<input type="file" id="contactForm" onchange="updateFileName(this)"></label><span id="contactFormName"></span></div>
+      <div class="card"><div class="label">מתקני צרכן</div><label class="upload-label">בחר קובץ<input type="file" id="equipment" onchange="updateFileName(this)"></label><span id="equipmentName"></span></div>
+      <div class="card"><div class="label">טופס מורשה חתימה</div><label class="upload-label">בחר קובץ<input type="file" id="authorized" onchange="updateFileName(this)"></label><span id="authorizedName"></span></div>
+      <div class="card"><div class="label">תעודת התאגדות</div><label class="upload-label">בחר קובץ<input type="file" id="certification" onchange="updateFileName(this)"></label><span id="certificationName"></span></div>
+      <div class="card"><div class="label">טופס הוראת קבע</div><label class="upload-label">בחר קובץ<input type="file" id="debit" onchange="updateFileName(this)"></label><span id="debitName"></span></div>
+      <div class="card"><div class="label">דוח נתוני צריכה</div><label class="upload-label">בחר קובץ<input type="file" id="report" onchange="updateFileName(this)"></label><span id="reportName"></span></div>
+
+      <button type="button" onclick="saveBusinessClient()">שמור</button>
+    </form>
+
+    <!-- פופאפ הודעה -->
+    <div id="popup" class="popup hidden" tabindex="0">
+      <p id="popupText"></p>
+      <button onclick="closePopup()">אישור</button>
+    </div>
+  </div>
+
+<script>
+  let excelFileHandle;
+  let folderHandle;
+
+  function showPopup(msg) {
+    document.getElementById("popupText").innerText = msg;
+    const popup = document.getElementById("popup");
+    popup.classList.remove("hidden");
+    popup.focus();
+  }
+
+  function closePopup() {
+    document.getElementById("popup").classList.add("hidden");
+  }
+
+  document.getElementById("popup").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") closePopup();
+  });
+
+  async function chooseExcel() {
+    try {
+      [excelFileHandle] = await window.showOpenFilePicker({
+        types: [{ description: "Excel Files", accept: { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"] } }]
+      });
+      document.getElementById("excelBtn").innerText = "✓ קובץ נבחר";
+      showPopup("קובץ האקסל נבחר בהצלחה");
+    } catch (e) {}
+  }
+
+  async function chooseFolder() {
+    try {
+      folderHandle = await window.showDirectoryPicker();
+      document.getElementById("folderBtn").innerText = "✓ תיקייה נבחרה";
+      showPopup("התיקייה נבחרה בהצלחה");
+    } catch (e) {}
+  }
+
+  function updateFileName(input) {
+    const span = document.getElementById(input.id + "Name");
+    if (input.files.length > 0) {
+      span.textContent = input.files[0].name;
+    } else {
+      span.textContent = "";
+    }
+  }
+
+  async function saveBusinessClient() {
+    try {
+      if (!excelFileHandle || !folderHandle) {
+        showPopup("יש לבחור קובץ ותיקייה קודם");
+        return;
+      }
+
+      const form = document.getElementById("businessForm");
+      const data = {};
+      [...form.elements].forEach(el => {
+        if (el.name) data[el.name] = el.value.trim() || "";
+      });
+
+      const clientFolderName = `${data["שם חברה"] || "ללא_שם"}_${data["ת.ז."] || "000"}`;
+      const clientDir = await folderHandle.getDirectoryHandle(clientFolderName, { create: true });
+
+      const fileInputs = [
+        { id: "contactForm", name: "טופס איש קשר" },
+        { id: "equipment", name: "מתקני צרכן" },
+        { id: "authorized", name: "טופס מורשה חתימה" },
+        { id: "certification", name: "תעודת התאגדות" },
+        { id: "debit", name: "טופס הוראת קבע" },
+        { id: "report", name: "דוח נתוני צריכה" }
+      ];
+
+      for (const input of fileInputs) {
+        const fileInput = document.getElementById(input.id);
+        if (fileInput.files.length > 0) {
+          const file = fileInput.files[0];
+          const handle = await clientDir.getFileHandle(file.name, { create: true });
+          const writable = await handle.createWritable();
+          await writable.write(await file.arrayBuffer());
+          await writable.close();
+          data[input.name] = "✔️";
+        } else {
+          data[input.name] = "❌";
+        }
+      }
+
+      const file = await excelFileHandle.getFile();
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: "array" });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const existingData = XLSX.utils.sheet_to_json(worksheet);
+
+      existingData.push(data);
+      const newSheet = XLSX.utils.json_to_sheet(existingData, { header: Object.keys(data) });
+      workbook.Sheets[sheetName] = newSheet;
+
+      const updatedArrayBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+      const writable = await excelFileHandle.createWritable();
+      await writable.write(updatedArrayBuffer);
+      await writable.close();
+
+      form.reset();
+      document.querySelectorAll("span[id$='Name']").forEach(s => s.textContent = "");
+      showPopup("הנתונים נשמרו בהצלחה");
+    } catch (err) {
+      if (err.name === "InvalidStateError") {
+        showPopup("לא ניתן לשמור לקובץ כשהוא פתוח ב־Excel. נא לסגור ולנסות שוב.");
+      } else {
+        showPopup("שגיאה: " + err.message);
+      }
+    }
+  }
+</script>
+</body>
+</html>
+
+=
