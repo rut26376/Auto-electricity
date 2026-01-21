@@ -27,15 +27,19 @@
     </div>
 
     <div class="tabs">
-      <button id="tabBtnResidential" onclick="switchTab('residential')">לקוח ביתי</button>
-      <button id="tabBtnBusiness" onclick="switchTab('business')">לקוח עסקי</button>
+      <button id="tabBtnResidential" class="tab-button active-tab" onclick="switchTab('residential')">לקוח ביתי</button>
+      <button id="tabBtnBusiness" class="tab-button" onclick="switchTab('business')">לקוח עסקי</button>
     </div>
 
     <div id="residentialTab">
       <button type="button" onclick="chooseExcelResidential()" class="choose-excel">בחר קובץ אקסל</button>
       <input type="text" id="searchInputResidential" class="field" placeholder="חפש לפי שם פרטי או משפחה"
         oninput="filterClients('residential')">
-      <select id="clientListResidential" size="8" class="field" onchange="loadClientData('residential')"></select>
+      <div class="client-list-wrapper">
+        <select id="clientListResidential" class="client-select" size="5"
+          onchange="loadClientData('residential')"></select>
+      </div>
+
       <form id="clientFormResidential"></form>
       <button id="saveBtnResidential" type="button" onclick="saveChanges('residential')">שמור שינויים</button>
     </div>
@@ -45,7 +49,10 @@
       <button type="button" onclick="chooseBusinessFolder()" class="choose-excel">בחר תיקיית שמירה</button>
       <input type="text" id="searchInputBusiness" class="field" placeholder="חפש לפי שם חברה או ת.ז."
         oninput="filterClients('business')">
-      <select id="clientListBusiness" size="8" class="field" onchange="loadClientData('business')"></select>
+      <div class="client-list-wrapper">
+        <select id="clientListBusiness" class="client-select" size="5" onchange="loadClientData('business')"></select>
+      </div>
+
       <form id="clientFormBusiness"></form>
       <button id="saveBtnBusiness" type="button" onclick="saveChanges('business')">שמור שינויים</button>
     </div>
@@ -63,13 +70,26 @@
     let businessFolderHandle;
 
     function switchTab(tab) {
-      document.getElementById("residentialTab").classList.add("hidden");
-      document.getElementById("businessTab").classList.add("hidden");
-      document.getElementById("tabBtnResidential").classList.remove("active");
-      document.getElementById("tabBtnBusiness").classList.remove("active");
-      document.getElementById(tab + "Tab").classList.remove("hidden");
-      document.getElementById("tabBtn" + capitalize(tab)).classList.add("active");
+      const residentialTab = document.getElementById("residentialTab");
+      const businessTab = document.getElementById("businessTab");
+      const btnResidential = document.getElementById("tabBtnResidential");
+      const btnBusiness = document.getElementById("tabBtnBusiness");
+
+      if (tab === 'residential') {
+        residentialTab.style.display = 'block';
+        businessTab.style.display = 'none';
+
+        btnResidential.classList.add('active-tab');
+        btnBusiness.classList.remove('active-tab');
+      } else {
+        residentialTab.style.display = 'none';
+        businessTab.style.display = 'block';
+
+        btnResidential.classList.remove('active-tab');
+        btnBusiness.classList.add('active-tab');
+      }
     }
+
 
     function showPopup(msg) {
       document.getElementById("popupText").innerText = msg;
@@ -111,6 +131,8 @@
         const option = new Option(key, index);
         list.appendChild(option);
       });
+      adjustClientListHeight(type);
+
     }
 
     function filterClients(type) {
@@ -120,6 +142,8 @@
         const option = list.options[i];
         option.style.display = option.textContent.toLowerCase().includes(input) ? "block" : "none";
       }
+      adjustClientListHeight(type);
+
     }
 
     function loadClientData(type) {
@@ -227,6 +251,33 @@
     function capitalize(txt) {
       return txt.charAt(0).toUpperCase() + txt.slice(1);
     }
+    function adjustClientListHeight(type) {
+      const list = document.getElementById("clientList" + capitalize(type));
+      const visibleOptions = Array.from(list.options).filter(option => option.style.display !== "none");
+      const rowHeight = 38; // גובה כל שורה כולל מרווחים (בערך)
+      const maxVisible = 5;
+      const height = Math.min(visibleOptions.length, maxVisible) * rowHeight;
+      list.style.height = height + "px";
+    }
+    function showTab(tab) {
+      const residential = document.getElementById('residentialTab');
+      const business = document.getElementById('businessTab');
+      const residentialBtn = document.querySelector('.tab-button:nth-child(1)');
+      const businessBtn = document.querySelector('.tab-button:nth-child(2)');
+
+      if (tab === 'residential') {
+        residential.style.display = 'block';
+        business.style.display = 'none';
+        residentialBtn.classList.add('active-tab');
+        businessBtn.classList.remove('active-tab');
+      } else {
+        residential.style.display = 'none';
+        business.style.display = 'block';
+        residentialBtn.classList.remove('active-tab');
+        businessBtn.classList.add('active-tab');
+      }
+    }
+
   </script>
 </body>
 
