@@ -33,8 +33,8 @@
 
     <div id="residentialTab">
       <button type="button" onclick="chooseExcelResidential()" class="choose-excel">בחר קובץ אקסל</button>
-      <input type="text" id="searchInputResidential" class="field" placeholder="חפש לפי שם פרטי או משפחה"
-        oninput="filterClients('residential')">
+      <div class="search-wrapper"><input type="text" id="searchInputResidential" class="field" placeholder="חפש לפי שם פרטי או משפחה"
+        oninput="filterClients('residential')"></div>
       <div class="client-list-wrapper"><select id="clientListResidential" class="client-select" size="5"
           onchange="loadClientData('residential')"></select></div>
       <form id="clientFormResidential"></form>
@@ -44,8 +44,8 @@
     <div id="businessTab" class="hidden">
       <button type="button" onclick="chooseExcelBusiness()" class="choose-excel">בחר קובץ אקסל</button>
       <button type="button" onclick="chooseBusinessFolder()" class="choose-excel">בחר תיקיית שמירה</button>
-      <input type="text" id="searchInputBusiness" class="field" placeholder="חפש לפי שם חברה או ת.ז."
-        oninput="filterClients('business')">
+      <div class="search-wrapper"><input type="text" id="searchInputBusiness" class="field" placeholder="חפש לפי שם חברה או חפ"
+        oninput="filterClients('business')"></div>
       <div class="client-list-wrapper"><select id="clientListBusiness" class="client-select" size="5"
           onchange="loadClientData('business')"></select></div>
       <form id="clientFormBusiness"></form>
@@ -54,8 +54,8 @@
 
     <div id="interestedTab" class="hidden">
       <button type="button" onclick="chooseExcelInterested()" class="choose-excel">בחר קובץ אקסל</button>
-      <input type="text" id="searchInputInterested" class="field" placeholder="חפש לפי שם"
-        oninput="filterClients('interested')">
+      <div class="search-wrapper"><input type="text" id="searchInputInterested" class="field" placeholder="חפש לפי שם"
+        oninput="filterClients('interested')"></div>
       <div class="client-list-wrapper"><select id="clientListInterested" class="client-select" size="5"
           onchange="loadClientData('interested')"></select></div>
       <form id="clientFormInterested"></form>
@@ -116,7 +116,16 @@
       const list = document.getElementById("clientList" + capitalize(type));
       list.innerHTML = "";
       data.forEach((row, index) => {
-        const key = type === 'residential' ? `${row["שם פרטי"] || ""} ${row["שם משפחה"] || ""}` : type === 'business' ? `${row["שם חברה"] || ""} ${row["ת.ז."] || ""}` : `${row["שם"] || ""}`;
+        let key;
+        if (type === 'residential') {
+          key = `${row["שם פרטי"] || ""} ${row["שם משפחה"] || ""}`;
+        } else if (type === 'business') {
+          const companyName = row["שם חברה"] || "";
+          const companyId = row["חפ"] || "";
+          key = companyId ? `${companyName} (${companyId})` : companyName;
+        } else {
+          key = `${row["שם"] || ""}`;
+        }
         const option = new Option(key, index);
         list.appendChild(option);
       });
@@ -132,180 +141,248 @@
       adjustClientListHeight(type);
     }
 
-   function loadClientData(type) {
-  const list = document.getElementById("clientList" + capitalize(type));
-  const index = list.selectedIndex;
-  if (index === -1) return;
+    async function loadClientData(type) {
+      const list = document.getElementById("clientList" + capitalize(type));
+      const index = list.selectedIndex;
+      if (index === -1) return;
 
-  const wb = type === 'residential' ? workbookResidential : type === 'business' ? workbookBusiness : workbookInterested;
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  const data = XLSX.utils.sheet_to_json(ws);
-  const row = data[index];
+      const wb = type === 'residential' ? workbookResidential : type === 'business' ? workbookBusiness : workbookInterested;
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws);
+      const row = data[index];
 
-  if (type === 'residential') selectedIndexResidential = index;
-  else if (type === 'business') selectedIndexBusiness = index;
-  else selectedIndexInterested = index;
+      if (type === 'residential') selectedIndexResidential = index;
+      else if (type === 'business') selectedIndexBusiness = index;
+      else selectedIndexInterested = index;
 
-  const form = document.getElementById("clientForm" + capitalize(type));
-  form.innerHTML = "";
+      const form = document.getElementById("clientForm" + capitalize(type));
+      form.innerHTML = "";
 
-  const fileFieldNames = [
-    "טופס איש קשר",
-    "מתקני צרכן",
-    "טופס מורשה חתימה",
-    "תעודת התאגדות",
-    "טופס הוראת קבע",
-    "דוח נתוני צריכה"
-  ];
+      const fileFieldNames = [
+        "טופס איש קשר",
+        "מתקני צרכן",
+        "טופס מורשה חתימה",
+        "תעודת התאגדות",
+        "טופס הוראת קבע",
+        "דוח נתוני צריכה"
+      ];
 
-  for (const key in row) {
-    const label = document.createElement("label");
-    label.textContent = key;
-    label.className = "label";
-    form.appendChild(label);
+      for (const key in row) {
+        // דלג על עמודות שמסתיימות ב־" - קובץ" (אלה עמודות ממטפורציה של שמות קבצים)
+        if (key.endsWith(" - קובץ")) continue;
 
-    if (type === 'interested' && key === "סטטוס") {
-      const select = document.createElement("select");
-      select.className = "field";
-      select.name = key;
-      ["חדש", "נשלח הצעה", "בהמתנה", "סגור", "לא רלוונטי"].forEach(opt => {
-        const o = new Option(opt, opt);
-        if (row[key] === opt) o.selected = true;
-        select.appendChild(o);
+        // בדוק אם זה שדה קובץ בלקוח עסקי
+        const isFileField = type === 'business' && fileFieldNames.includes(key);
+
+        if (isFileField) {
+          // שדה קובץ
+          const fileInput = document.createElement("input");
+          fileInput.type = "file";
+          fileInput.name = key + "_file";
+          fileInput.id = key + "_file";
+          fileInput.style.display = "none";
+
+          const labelForUpload = document.createElement("label");
+          labelForUpload.className = "upload-label";
+          labelForUpload.htmlFor = fileInput.id;
+          labelForUpload.textContent = "בחר קובץ";
+
+          // הצגת שם הקובץ הקיים (אם יש)
+          const existingName = row[key] || row[key + " - קובץ"] || "";
+          const existingSpan = document.createElement("span");
+          existingSpan.className = "upload-success";
+          existingSpan.textContent = existingName ? `קיים: ${existingName}` : "אין קובץ";
+
+          fileInput.addEventListener("change", () => {
+            if (fileInput.files[0]) {
+              labelForUpload.textContent = fileInput.files[0].name;
+              existingSpan.textContent = `החדש: ${fileInput.files[0].name}`;
+            }
+          });
+
+          // יצירת שורה שלמה עם כותרת + כפתור + שם
+          const fileRowWrapper = document.createElement("div");
+          fileRowWrapper.className = "file-row-wrapper";
+
+          const label = document.createElement("div");
+          label.className = "file-label";
+          label.textContent = key;
+
+          const controlsWrapper = document.createElement("div");
+          controlsWrapper.className = "file-controls-wrapper";
+          controlsWrapper.appendChild(fileInput);
+          controlsWrapper.appendChild(labelForUpload);
+          controlsWrapper.appendChild(existingSpan);
+
+          fileRowWrapper.appendChild(label);
+          fileRowWrapper.appendChild(controlsWrapper);
+          form.appendChild(fileRowWrapper);
+        } else if (type === 'interested' && key === "סטטוס") {
+          // שדה סטטוס לאינטרסד
+          const label = document.createElement("label");
+          label.textContent = key;
+          label.className = "label";
+          form.appendChild(label);
+
+          const select = document.createElement("select");
+          select.className = "field";
+          select.name = key;
+          ["מתעניין", "חוזה שגוי", "חוזה חסר", "מונה חסר", "חוזה ומונה חסרים", "ת.ז שגוייה"].forEach(opt => {
+            const o = new Option(opt, opt);
+            if (row[key] === opt) o.selected = true;
+            select.appendChild(o);
+          });
+          form.appendChild(select);
+        } else {
+          // שדה טקסט רגיל
+          const label = document.createElement("label");
+          label.textContent = key;
+          label.className = "label";
+          form.appendChild(label);
+
+          const input = document.createElement("input");
+          input.name = key;
+          input.className = "field";
+          input.value = row[key] || "";
+          form.appendChild(input);
+        }
+      }
+    }
+
+
+    async function saveChanges(type) {
+      const button = document.getElementById("saveBtn" + capitalize(type));
+      const originalText = button.innerText;
+      button.innerText = "שומר...";
+      button.disabled = true;
+
+      const wb = type === 'residential' ? workbookResidential : type === 'business' ? workbookBusiness : workbookInterested;
+      const handle = type === 'residential' ? residentialFileHandle : type === 'business' ? businessFileHandle : interestedFileHandle;
+      const idx = type === 'residential' ? selectedIndexResidential : type === 'business' ? selectedIndexBusiness : selectedIndexInterested;
+
+      if (!handle) {
+        showPopup("יש לבחור קובץ אקסל לפני השמירה");
+        button.innerText = originalText;
+        button.disabled = false;
+        return;
+      }
+
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const allData = XLSX.utils.sheet_to_json(ws);
+      if (idx === undefined || idx < 0 || idx >= allData.length) {
+        showPopup("יש לבחור לקוח לפני שמירה");
+        button.innerText = originalText;
+        button.disabled = false;
+        return;
+      }
+
+      const form = document.getElementById("clientForm" + capitalize(type));
+      const inputs = form.querySelectorAll("input, select");
+      const data = { ...allData[idx] };
+
+      const fileInputs = [];
+
+      inputs.forEach(input => {
+        if (input.type === "file") {
+          if (input.files.length > 0) fileInputs.push(input);
+        } else {
+          data[input.name] = input.value;
+        }
       });
-      form.appendChild(select);
-    } else {
-      const input = document.createElement("input");
-      input.name = key;
-      input.className = "field";
-      input.value = row[key];
-      form.appendChild(input);
-    }
 
-    // העלאת קובץ רק לשדות הרלוונטיים
-    if (type === 'business' && fileFieldNames.includes(key)) {
-      const wrapper = document.createElement("div");
-      wrapper.style.marginBottom = "8px";
+      if (type === 'business') {
+        if (!businessFolderHandle) {
+          showPopup("יש לבחור תיקיית שמירה קודם");
+          button.innerText = originalText;
+          button.disabled = false;
+          return;
+        }
 
-      const fileInput = document.createElement("input");
-      fileInput.type = "file";
-      fileInput.name = key + "_file";
-      fileInput.id = key + "_file";
-      fileInput.style.display = "none";
+        // שם התיקייה החדש בהתאם לנתונים המעודכנים
+        const newFolderName = `${data["שם חברה"] || "ללא_שם"}_${data["חפ"] || "000"}`;
+        
+        // שם התיקייה הישנה בהתאם לנתונים הקודמים
+        const existingRow = allData[idx];
+        const oldFolderName = `${existingRow["שם חברה"] || "ללא_שם"}_${existingRow["חפ"] || "000"}`;
 
-      const labelForUpload = document.createElement("label");
-      labelForUpload.className = "upload-label";
-      labelForUpload.htmlFor = fileInput.id;
-      labelForUpload.textContent = "בחר קובץ";
+        // אם שם התיקייה השתנה - עדכן את שם התיקייה
+        if (oldFolderName !== newFolderName) {
+          try {
+            // קבל את התיקייה הישנה
+            const oldDir = await businessFolderHandle.getDirectoryHandle(oldFolderName);
+            
+            // צור את התיקייה החדשה
+            const newDir = await businessFolderHandle.getDirectoryHandle(newFolderName, { create: true });
+            
+            // העתק את כל הקבצים מהתיקייה הישנה לחדשה
+            for await (const entry of oldDir.entries()) {
+              if (entry[1].kind === 'file') {
+                const file = await entry[1].getFile();
+                const fileHandle = await newDir.getFileHandle(entry[0], { create: true });
+                const writableFile = await fileHandle.createWritable();
+                await writableFile.write(await file.arrayBuffer());
+                await writableFile.close();
+              }
+            }
+            
+            // מחק את התיקייה הישנה
+            try {
+              await businessFolderHandle.removeEntry(oldFolderName, { recursive: true });
+            } catch (e) {
+              console.warn(`לא ניתן למחוק את התיקייה הישנה: ${oldFolderName}`, e);
+            }
+          } catch (e) {
+            console.warn(`לא ניתן לשנות שם תיקייה: ${oldFolderName} → ${newFolderName}`, e);
+          }
+        }
 
-      fileInput.addEventListener("change", () => {
-        labelForUpload.textContent = fileInput.files[0]?.name || "בחר קובץ";
-      });
+        const clientDir = await businessFolderHandle.getDirectoryHandle(newFolderName, { create: true });
 
-      wrapper.appendChild(fileInput);
-      wrapper.appendChild(labelForUpload);
-      form.appendChild(wrapper);
-    }
-  }
-}
+        for (const fileInput of fileInputs) {
+          const file = fileInput.files[0];
+          const fieldName = fileInput.name.replace("_file", "");
 
+          // גישה רברסיבית למפתח קיים (התחשבות בכל פורמט אפשרי בעמודת האקסל)
+          const possibleKeys = [fieldName, fieldName + " - קובץ"];
+          const existingKey = possibleKeys.find(k => existingRow[k] !== undefined) || fieldName;
 
-  async function saveChanges(type) {
-  const button = document.getElementById("saveBtn" + capitalize(type));
-  const originalText = button.innerText;
-  button.innerText = "שומר...";
-  button.disabled = true;
+          // אם קיים קובץ קודם - מחיקה
+          if (existingRow[existingKey]) {
+            try {
+              await clientDir.removeEntry(existingRow[existingKey]);
+            } catch (e) {
+              console.warn(`לא ניתן למחוק את הקובץ הישן: ${existingRow[existingKey]}`, e);
+            }
+          }
 
-  const wb = type === 'residential' ? workbookResidential : type === 'business' ? workbookBusiness : workbookInterested;
-  const handle = type === 'residential' ? residentialFileHandle : type === 'business' ? businessFileHandle : interestedFileHandle;
-  const idx = type === 'residential' ? selectedIndexResidential : type === 'business' ? selectedIndexBusiness : selectedIndexInterested;
+          // שמירת הקובץ החדש
+          const fileHandle = await clientDir.getFileHandle(file.name, { create: true });
+          const writableFile = await fileHandle.createWritable();
+          await writableFile.write(await file.arrayBuffer());
+          await writableFile.close();
 
-  if (!handle) {
-    showPopup("יש לבחור קובץ אקסל לפני השמירה");
-    button.innerText = originalText;
-    button.disabled = false;
-    return;
-  }
-
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  const allData = XLSX.utils.sheet_to_json(ws);
-  if (idx === undefined || idx < 0 || idx >= allData.length) {
-    showPopup("יש לבחור לקוח לפני שמירה");
-    button.innerText = originalText;
-    button.disabled = false;
-    return;
-  }
-
-  const form = document.getElementById("clientForm" + capitalize(type));
-  const inputs = form.querySelectorAll("input, select");
-  const data = { ...allData[idx] };
-
-  const fileInputs = [];
-
-  inputs.forEach(input => {
-    if (input.type === "file") {
-      if (input.files.length > 0) fileInputs.push(input);
-    } else {
-      data[input.name] = input.value;
-    }
-  });
-
-  if (type === 'business') {
-    if (!businessFolderHandle) {
-      showPopup("יש לבחור תיקיית שמירה קודם");
-      button.innerText = originalText;
-      button.disabled = false;
-      return;
-    }
-
-    const folderName = `${data["שם חברה"] || "ללא_שם"}_${data["חפ"] || "000"}`;
-    const clientDir = await businessFolderHandle.getDirectoryHandle(folderName, { create: true });
-
-    const existingRow = allData[idx];
-
-    for (const fileInput of fileInputs) {
-      const file = fileInput.files[0];
-      const fieldName = fileInput.name.replace("_file", "");
-      const fileFieldKey = fieldName + " - קובץ";
-
-      // אם קיים קובץ קודם - מחיקה
-      if (existingRow[fileFieldKey]) {
-        try {
-          await clientDir.removeEntry(existingRow[fileFieldKey]);
-        } catch (e) {
-          console.warn(`לא ניתן למחוק את הקובץ הישן: ${existingRow[fileFieldKey]}`, e);
+          // עדכון שדה באקסל בעזרת המפתח הקיים או השם הראשוני
+          data[existingKey] = file.name;
         }
       }
 
-      // שמירת הקובץ החדש
-      const fileHandle = await clientDir.getFileHandle(file.name, { create: true });
-      const writable = await fileHandle.createWritable();
-      await writable.write(await file.arrayBuffer());
+      allData[idx] = data;
+      const newSheet = XLSX.utils.json_to_sheet(allData);
+      wb.Sheets[wb.SheetNames[0]] = newSheet;
+
+      // כתיבה בצורה של ArrayBuffer (עקבי עם businessCust.html)
+      const updatedArrayBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+      const writable = await handle.createWritable();
+      await writable.write(updatedArrayBuffer);
       await writable.close();
 
-      // עדכון שדה באקסל
-      data[fileFieldKey] = file.name;
+      // עדכון הרשימה הנפתחת כדי להשקף את השינויים
+      populateClientList(type, wb);
+
+      button.innerText = originalText;
+      button.disabled = false;
+      showPopup("הנתונים נשמרו בהצלחה.");
     }
-  }
-
-  allData[idx] = data;
-  const newSheet = XLSX.utils.json_to_sheet(allData);
-  wb.Sheets[wb.SheetNames[0]] = newSheet;
-
-  const binaryString = XLSX.write(wb, { bookType: "xlsx", type: "binary" });
-  const buffer = new ArrayBuffer(binaryString.length);
-  const view = new Uint8Array(buffer);
-  for (let i = 0; i < binaryString.length; ++i) view[i] = binaryString.charCodeAt(i) & 0xFF;
-
-  const blob = new Blob([buffer], { type: "application/octet-stream" });
-  const writable = await handle.createWritable();
-  await writable.write(blob);
-  await writable.close();
-
-  button.innerText = originalText;
-  button.disabled = false;
-  showPopup("הנתונים נשמרו בהצלחה.");
-}
 
 
     function capitalize(txt) {
