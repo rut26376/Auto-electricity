@@ -33,7 +33,7 @@
       <div class="card"><div class="label">מיקוד</div><input class="field" name="מיקוד"></div>
       <div class="card"><div class="label">מס בית</div><input class="field" name="מס בית"></div>
       <div class="card"><div class="label">טלפון</div><input class="field" name="טלפון"></div>
-      <div class="card"><div class="label">דוא\"ל</div><input class="field" name="דוא\"ל"></div>
+      <div class="card"><div class="label">דוא"ל</div><input class="field" name="דואל"></div>
       <div class="card"><div class="label">מס מונה</div><input class="field" name="מס מונה"></div>
       <div class="card"><div class="label">מס חשבון חוזה</div><input class="field" name="מס חשבון חוזה"></div>
       <div class="card"><div class="label">קוד מונה</div><input class="field" name="קוד מונה"></div>
@@ -119,7 +119,7 @@
         if (el.name) data[el.name] = el.value.trim() || "";
       });
 
-      const clientFolderName = `${data["שם חברה"] || "ללא_שם"}_${data["ת.ז."] || "000"}`;
+      const clientFolderName = `${data["שם חברה"] || "ללא_שם"}_${data["חפ"] || "000"}`;
       const clientDir = await folderHandle.getDirectoryHandle(clientFolderName, { create: true });
 
       const fileInputs = [
@@ -139,9 +139,9 @@
           const writable = await handle.createWritable();
           await writable.write(await file.arrayBuffer());
           await writable.close();
-          data[input.name] = "✔️";
+          data[input.name] = file.name;
         } else {
-          data[input.name] = "❌";
+          data[input.name] = "";
         }
       }
 
@@ -173,6 +173,7 @@
     }
   }
 </script>
+
 </body>
 </html>
 
