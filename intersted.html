@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+
+<head>
+  <meta charset="UTF-8">
+  <title>לקוח מתעניין</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/png" href="logo3.png">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="logo.JPG" alt="לוגו">
+    </div>
+
+    <button type="button" onclick="chooseExcel()" class="choose-excel">בחר קובץ אקסל</button>
+
+    <h2>טופס לקוח מתעניין</h2>
+    <form id="interestedForm">
+      <div class="card">
+        <div class="label">שם</div>
+        <input class="field" name="שם">
+      </div>
+
+      <div class="card">
+        <div class="label">טלפון</div>
+        <input class="field" name="טלפון">
+      </div>
+
+      <div class="card">
+        <div class="label">סטטוס</div>
+        <select class="field" name="סטטוס">
+          <option value="חדש">חדש</option>
+          <option value="נשלח הצעה">נשלח הצעה</option>
+          <option value="בהמתנה">בהמתנה</option>
+          <option value="סגור">סגור</option>
+          <option value="לא רלוונטי">לא רלוונטי</option>
+        </select>
+      </div>
+
+      <button type="button" onclick="saveInterestedClient()">שמור</button>
+    </form>
+
+    <div id="popup" class="popup hidden" tabindex="0">
+      <p id="popupText"></p>
+      <button onclick="closePopup()">אישור</button>
+    </div>
+  </div>
+
+  <script>
+    let excelFileHandle;
+
+    function showPopup(msg) {
+      document.getElementById("popupText").innerText = msg;
+      const popup = document.getElementById("popup");
+      popup.classList.remove("hidden");
+      popup.focus();
+    }
+
+    function closePopup() {
+      document.getElementById("popup").classList.add("hidden");
+    }
+
+    document.getElementById("popup").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") closePopup();
+    });
+
+    async function chooseExcel() {
+      try {
+        [excelFileHandle] = await window.showOpenFilePicker({
+          types: [{
+            description: 'Excel Files',
+            accept: {
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx']
+            }
+          }]
+        });
+        showPopup("קובץ נבחר בהצלחה");
+      } catch (err) {
+        showPopup("בחירת קובץ בוטלה");
+      }
+    }
+
+    async function saveInterestedClient() {
+      try {
+        if (!excelFileHandle) {
+          showPopup("יש לבחור קובץ קודם");
+          return;
+        }
+
+        const file = await excelFileHandle.getFile();
+        const arrayBuffer = await file.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const existingData = XLSX.utils.sheet_to_json(worksheet);
+
+        const form = document.getElementById("interestedForm");
+        const data = {};
+        [...form.elements].forEach(el => {
+          if (el.name) data[el.name] = el.value.trim() || "";
+        });
+
+        existingData.push(data);
+        const newSheet = XLSX.utils.json_to_sheet(existingData, { header: Object.keys(data) });
+        workbook.Sheets[sheetName] = newSheet;
+
+        const updatedArrayBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+        const writable = await excelFileHandle.createWritable();
+        await writable.write(updatedArrayBuffer);
+        await writable.close();
+
+        form.reset();
+        showPopup("הנתונים נשמרו בהצלחה");
+      } catch (err) {
+        if (err.name === "InvalidStateError") {
+          showPopup("יש לסגור את הקובץ ב-Excel לפני השמירה.");
+        } else {
+          showPopup("שגיאה: " + err.message);
+        }
+      }
+    }
+  </script>
+</body>
+
+</html>

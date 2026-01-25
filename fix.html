@@ -5,6 +5,7 @@
   <meta charset="UTF-8">
   <title>תיקון נתוני לקוח</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/png" href="logo3.png">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     .active {
@@ -150,11 +151,15 @@
       const list = document.getElementById("clientList" + capitalize(type));
       const index = list.selectedIndex;
       if (index === -1) return;
+
       const wb = (type === 'residential') ? workbookResidential : workbookBusiness;
       const ws = wb.Sheets[wb.SheetNames[0]];
       const data = XLSX.utils.sheet_to_json(ws);
       const row = data[index];
-      if (type === 'residential') selectedIndexResidential = index; else selectedIndexBusiness = index;
+
+      if (type === 'residential') selectedIndexResidential = index;
+      else selectedIndexBusiness = index;
+
       const form = document.getElementById("clientForm" + capitalize(type));
       form.innerHTML = "";
 
@@ -170,31 +175,51 @@
         input.value = row[key];
         form.appendChild(input);
 
-        if (type === 'business' && key.includes("קובץ")) {
-          const fileInput = document.createElement("input");
-          fileInput.type = "file";
-          fileInput.className = "field";
-          fileInput.onchange = async (e) => {
-            const file = e.target.files[0];
-            if (!file || !businessFolderHandle) return;
-            const folderName = `${row["שם חברה"] || "ללא_שם"}_${row["ת.ז."] || "000"}`.replace(/[\\/:*?"<>|]/g, '_');
-            const clientDir = await businessFolderHandle.getDirectoryHandle(folderName, { create: true });
-            const fileHandle = await clientDir.getFileHandle(file.name, { create: true });
-            const writable = await fileHandle.createWritable();
-            await writable.write(await file.arrayBuffer());
-            await writable.close();
+        // תנאי: רק בשדות שמהווים קבצים (כוללים אחת מהמילים הבאות) וערכם ❌
+        const isFileIndicator = ["טופס", "דוח", "תעודת", "קובץ", "צרכן"].some(word => key.includes(word));
+       if (type === 'business' && row[key] === "❌") {
+  const wrapper = document.createElement("div");
 
-            const note = document.createElement("div");
-            note.className = "upload-success";
-            note.innerText = "✓ הקובץ הועלה בהצלחה";
-            form.appendChild(note);
+  const label = document.createElement("label");
+  label.className = "upload-label";
+  label.textContent = "בחר קובץ";
 
-            input.value = file.name;
-          };
-          form.appendChild(fileInput);
-        }
+  const fileInput = document.createElement("input");
+  fileInput.type = "file";
+  fileInput.id = "file_" + key.replace(/\s+/g, "_");
+  fileInput.dataset.targetField = key;
+  fileInput.style.display = "none";
+
+  const fileNameSpan = document.createElement("span");
+  fileNameSpan.style.display = "block";
+  fileNameSpan.style.marginTop = "6px";
+
+  label.htmlFor = fileInput.id;
+  label.appendChild(fileInput);
+  wrapper.appendChild(label);
+  wrapper.appendChild(fileNameSpan);
+  form.appendChild(wrapper);
+
+  fileInput.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !businessFolderHandle) return;
+
+    const folderName = `${row["שם חברה"] || "ללא_שם"}_${row["ת.ז."] || "000"}`.replace(/[\\/:*?"<>|]/g, '_');
+    const clientDir = await businessFolderHandle.getDirectoryHandle(folderName, { create: true });
+
+    const fileHandle = await clientDir.getFileHandle(file.name, { create: true });
+    const writable = await fileHandle.createWritable();
+    await writable.write(await file.arrayBuffer());
+    await writable.close();
+
+    input.value = "✔️";
+    fileNameSpan.textContent = file.name;
+  };
+}
+
       }
     }
+
 
     async function saveChanges(type) {
       const button = document.getElementById("saveBtn" + capitalize(type));
