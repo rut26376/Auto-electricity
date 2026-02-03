@@ -5,117 +5,6 @@
   <title>מערכת ניהול חשמל</title>
   <link rel="stylesheet" href="style.css">
   <link rel="icon" type="image/png" href="logo3.png">
-  <style>
-    .welcome-section {
-      text-align: center;
-      margin-bottom: 16px;
-      padding: 12px 0;
-    }
-
-    .welcome-section h1 {
-      font-size: 24px;
-      color: var(--primary);
-      margin-bottom: 4px;
-      font-weight: bold;
-    }
-
-    .welcome-section p {
-      font-size: 13px;
-      color: #6b7280;
-      margin-bottom: 0;
-    }
-
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 16px;
-      margin-bottom: 20px;
-    }
-
-    .feature-card {
-      background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
-      border: 2px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-    }
-
-    .feature-card:hover {
-      border-color: var(--secondary);
-      box-shadow: 0 8px 20px rgba(251, 191, 36, 0.15);
-      transform: translateY(-2px);
-    }
-
-    .feature-icon {
-      font-size: 32px;
-      margin-bottom: 8px;
-      display: inline-block;
-    }
-
-    .feature-card h3 {
-      font-size: 16px;
-      color: var(--primary);
-      margin: 8px 0;
-      font-weight: bold;
-    }
-
-    .feature-card p {
-      font-size: 12px;
-      color: #6b7280;
-      margin-bottom: 12px;
-      line-height: 1.4;
-      flex-grow: 1;
-    }
-
-    .feature-card .feature-btn {
-      background: linear-gradient(135deg, var(--primary), #1e293b);
-      color: white;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      width: 100%;
-      margin-top: auto;
-    }
-
-    .feature-card .feature-btn:hover {
-      opacity: 0.9;
-      transform: scale(1.02);
-    }
-
-    .feature-card .feature-btn:active {
-      transform: scale(0.98);
-    }
-
-    .stats-section {
-      background: linear-gradient(135deg, var(--primary) 0%, #1e293b 100%);
-      border-radius: 12px;
-      padding: 16px;
-      color: white;
-      text-align: center;
-      margin-top: 0;
-    }
-
-    .stats-section h2 {
-      font-size: 18px;
-      margin-bottom: 8px;
-    }
-
-    .stats-section p {
-      font-size: 12px;
-      opacity: 0.9;
-      margin: 0;
-    }
-  </style>
 </head>
 <body>
   <div class="container">
@@ -124,7 +13,7 @@
     </div>
 
     <div class="welcome-section">
-      <h1>🌟 מערכת ניהול חשמל</h1>
+      <h1> מערכת ניהול חשמל</h1>
       <p>ניהול יעיל וקל של נתוני לקוחות וחשבונות חשמל</p>
     </div>
 
@@ -162,6 +51,13 @@
         <h3>השלמת פרטים חסרים</h3>
         <p>עדכן ותקן נתוני לקוחות קיימים</p>
         <button class="feature-btn" onclick="goTo('fix.html')">פתח →</button>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🤝</div>
+        <h3>לקוח מצורף</h3>
+        <p>ניהול לקוחות מצורפים וחברים</p>
+        <button class="feature-btn" onclick="goTo('affiliated.html')">פתח →</button>
       </div>
     </div>
   </div>
