@@ -428,3 +428,14 @@ select.client-select option:hover {
 .feature-card .feature-btn:active {
   transform: scale(0.98);
 }
+
+.active {
+  background-color: var(--primary);
+  color: white;
+}
+
+.upload-success {
+  color: green;
+  font-size: 14px;
+  margin-top: 4px;
+}

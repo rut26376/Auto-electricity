@@ -7,18 +7,6 @@
   <link rel="stylesheet" href="style.css">
   <link rel="icon" type="image/png" href="logo3.png">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <style>
-    .active {
-      background-color: var(--primary);
-      color: white;
-    }
-
-    .upload-success {
-      color: green;
-      font-size: 14px;
-      margin-top: 4px;
-    }
-  </style>
 </head>
 
 <body onload="switchTab('residential')">
@@ -29,6 +17,7 @@
       <button id="tabBtnResidential" class="tab-button active-tab" onclick="switchTab('residential')">לקוח ביתי</button>
       <button id="tabBtnBusiness" class="tab-button" onclick="switchTab('business')">לקוח עסקי</button>
       <button id="tabBtnInterested" class="tab-button" onclick="switchTab('interested')">לקוח מתעניין</button>
+      <button id="tabBtnAffiliated" class="tab-button" onclick="switchTab('affiliated')">לקוח מצורף</button>
     </div>
 
     <div id="residentialTab">
@@ -62,6 +51,16 @@
       <button id="saveBtnInterested" type="button" onclick="saveChanges('interested')">שמור שינויים</button>
     </div>
 
+    <div id="affiliatedTab" class="hidden">
+      <button type="button" onclick="chooseExcelAffiliated()" class="choose-excel">בחר קובץ אקסל</button>
+      <div class="search-wrapper"><input type="text" id="searchInputAffiliated" class="field" placeholder="חפש לפי שם חברה"
+        oninput="filterClients('affiliated')"></div>
+      <div class="client-list-wrapper"><select id="clientListAffiliated" class="client-select" size="5"
+          onchange="loadClientData('affiliated')"></select></div>
+      <form id="clientFormAffiliated"></form>
+      <button id="saveBtnAffiliated" type="button" onclick="saveChanges('affiliated')">שמור שינויים</button>
+    </div>
+
     <div id="popup" class="popup hidden" tabindex="0">
       <p id="popupText"></p>
       <button onclick="closePopup()">אישור</button>
@@ -72,11 +71,12 @@
     let workbookResidential, selectedIndexResidential;
     let workbookBusiness, selectedIndexBusiness;
     let workbookInterested, selectedIndexInterested;
-    let residentialFileHandle, businessFileHandle, interestedFileHandle;
+    let workbookAffiliated, selectedIndexAffiliated;
+    let residentialFileHandle, businessFileHandle, interestedFileHandle, affiliatedFileHandle;
     let businessFolderHandle;
 
     function switchTab(tab) {
-      ["residential", "business", "interested"].forEach(t => {
+      ["residential", "business", "interested", "affiliated"].forEach(t => {
         document.getElementById(t + "Tab").style.display = t === tab ? 'block' : 'none';
         document.getElementById("tabBtn" + capitalize(t)).classList.toggle("active-tab", t === tab);
       });
@@ -106,6 +106,14 @@
       populateClientList("interested", workbookInterested);
     }
 
+    async function chooseExcelAffiliated() {
+      [affiliatedFileHandle] = await window.showOpenFilePicker();
+      const file = await affiliatedFileHandle.getFile();
+      const data = await file.arrayBuffer();
+      workbookAffiliated = XLSX.read(data);
+      populateClientList("affiliated", workbookAffiliated);
+    }
+
     async function chooseBusinessFolder() {
       businessFolderHandle = await window.showDirectoryPicker();
     }
@@ -122,6 +130,10 @@
         } else if (type === 'business') {
           const companyName = row["שם חברה"] || "";
           const companyId = row["חפ"] || "";
+          key = companyId ? `${companyName} (${companyId})` : companyName;
+        } else if (type === 'affiliated') {
+          const companyName = row["שם חברה"] || "";
+          const companyId = row["ת.ז."] || "";
           key = companyId ? `${companyName} (${companyId})` : companyName;
         } else {
           key = `${row["שם"] || ""}`;
@@ -146,14 +158,15 @@
       const index = list.selectedIndex;
       if (index === -1) return;
 
-      const wb = type === 'residential' ? workbookResidential : type === 'business' ? workbookBusiness : workbookInterested;
+      const wb = type === 'residential' ? workbookResidential : type === 'business' ? workbookBusiness : type === 'interested' ? workbookInterested : workbookAffiliated;
       const ws = wb.Sheets[wb.SheetNames[0]];
       const data = XLSX.utils.sheet_to_json(ws);
       const row = data[index];
 
       if (type === 'residential') selectedIndexResidential = index;
       else if (type === 'business') selectedIndexBusiness = index;
-      else selectedIndexInterested = index;
+      else if (type === 'interested') selectedIndexInterested = index;
+      else if (type === 'affiliated') selectedIndexAffiliated = index;
 
       const form = document.getElementById("clientForm" + capitalize(type));
       form.innerHTML = "";
@@ -233,6 +246,19 @@
             select.appendChild(o);
           });
           form.appendChild(select);
+        } else if (key.includes("תאריך")) {
+          // שדה תאריך
+          const label = document.createElement("label");
+          label.textContent = key;
+          label.className = "label";
+          form.appendChild(label);
+
+          const input = document.createElement("input");
+          input.type = "date";
+          input.name = key;
+          input.className = "field";
+          input.value = row[key] || "";
+          form.appendChild(input);
         } else {
           // שדה טקסט רגיל
           const label = document.createElement("label");
@@ -256,9 +282,9 @@
       button.innerText = "שומר...";
       button.disabled = true;
 
-      const wb = type === 'residential' ? workbookResidential : type === 'business' ? workbookBusiness : workbookInterested;
-      const handle = type === 'residential' ? residentialFileHandle : type === 'business' ? businessFileHandle : interestedFileHandle;
-      const idx = type === 'residential' ? selectedIndexResidential : type === 'business' ? selectedIndexBusiness : selectedIndexInterested;
+      const wb = type === 'residential' ? workbookResidential : type === 'business' ? workbookBusiness : type === 'interested' ? workbookInterested : workbookAffiliated;
+      const handle = type === 'residential' ? residentialFileHandle : type === 'business' ? businessFileHandle : type === 'interested' ? interestedFileHandle : affiliatedFileHandle;
+      const idx = type === 'residential' ? selectedIndexResidential : type === 'business' ? selectedIndexBusiness : type === 'interested' ? selectedIndexInterested : selectedIndexAffiliated;
 
       if (!handle) {
         showPopup("יש לבחור קובץ אקסל לפני השמירה");
